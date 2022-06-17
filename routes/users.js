@@ -75,6 +75,7 @@ router.post("/login", async (req, res) => {
       return;
     }
 
+<<<<<<< HEAD
     const isValid = await compare(password, user.userPassword);
     if (!isValid) {
       res.status(400).send({
@@ -87,3 +88,29 @@ router.post("/login", async (req, res) => {
 });
 
 module.exports = router;
+=======
+
+
+//더미 데이터 넣기
+router.post("/add", async (req, res) => {
+  
+  let name = "김형근"
+
+
+
+  for( let i = 0; i < 30; i++){
+
+    setname = `${name}_${i}`;
+
+
+  }
+
+
+
+  res.status(200).send({
+    msg: "성공"  
+  });
+});
+
+module.exports = router;
+>>>>>>> 62395b61cca9d00864ed90f8d8151bd85f97ce5a
