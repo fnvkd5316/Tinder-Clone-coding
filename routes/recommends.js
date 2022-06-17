@@ -38,11 +38,12 @@ router.get("/", async (req, res) => {
 
 
 router.post("/select", async (req, res) => {
+
   const myId = "test1"; //미들웨어 Id 넣음
   const { selectId, select } = req.body;
 
   const me = await User.findOne({ userId: myId });
-  const other = await User.findOne({userId: selectId});
+  const other = await User.findOne({ userId: selectId });
 
   if ( !me || !other ) {
     return  res.status(400).send({
@@ -62,12 +63,8 @@ router.post("/select", async (req, res) => {
 
   me.likeMe.find(selectId);
 
-
-
-
   me.save();
   other.save();
-
 
   res.status(200).send({
     result: "success",
@@ -83,7 +80,7 @@ router.post("/add", async (req, res) => {
   const {name} = req.body;
 
   for ( let i = 1; i < 31; i++ ) {
-    console.log(i);
+  
     const user = new User({ 
         userId: `${name}_${i}`, 
         password: "1234qwer",
