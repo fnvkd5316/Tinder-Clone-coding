@@ -6,6 +6,10 @@ const port = 3000;
 require("dotenv").config();
 
 console.log(process.env.MONGO_DB);
+<<<<<<< HEAD
+=======
+
+>>>>>>> 314d234cada3ba7bf19baec23756b6fad80deefe
 
 connect_MongoDB(); //DB 연결
 
