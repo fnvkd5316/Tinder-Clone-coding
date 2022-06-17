@@ -18,27 +18,4 @@ router.post("/signup", async (req, res) => {
 
 
 
-
-
-//더미 데이터 넣기
-router.post("/add", async (req, res) => {
-  
-  let name = "김형근"
-
-
-
-  for( let i = 0; i < 30; i++){
-
-    setname = `${name}_${i}`;
-
-
-  }
-
-
-
-  res.status(200).send({
-    msg: "성공"  
-  });
-});
-
 module.exports = router;
