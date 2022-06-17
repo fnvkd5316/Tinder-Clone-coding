@@ -3,6 +3,10 @@ const connect_MongoDB = require("./schemas/connect_db");
 const cors = require('cors');
 const app = express();
 const port = 3000;
+require("dotenv").config();
+
+console.log(process.env.MONGO_DB);
+
 
 connect_MongoDB(); //DB 연결
 
