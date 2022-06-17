@@ -5,7 +5,7 @@ const app = express();
 const port = 3000;
 require("dotenv").config();
 
-console.log(process.env.MongoDB);
+console.log(process.env.MONGO_DB);
 
 connect_MongoDB(); //DB 연결
 
@@ -17,7 +17,7 @@ app.use(
   })
 );
 
-app.use(express.static("static"));
+app.use(express.static("static")); // 사진 저장소
 app.use(express.json()); // json형태의 데이터를 parsing하여 사용할 수 있게 만듦.
 app.use(express.urlencoded({ extended: false }));
 
