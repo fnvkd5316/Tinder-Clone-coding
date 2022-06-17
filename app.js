@@ -19,10 +19,9 @@ app.use(cors({
 app.use(express.static("static"));
 app.use(express.json()); // json형태의 데이터를 parsing하여 사용할 수 있게 만듦.
 app.use(express.urlencoded({extended:false}));
-app.use("/users", [usersRouter]);
-app.use("/chats", [chatsRouter]);
-app.use("/recommends", [recommendsRouter]);
-
+app.use("/api/users", [usersRouter]);
+app.use("/api/chats", [chatsRouter]);
+app.use("/api/recommends", [recommendsRouter]);
 
 app.listen(port, () => {
   console.log(port, "포트로 서버가 켜졌습니다.");
