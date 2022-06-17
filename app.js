@@ -1,15 +1,12 @@
 const express = require("express");
 const connect_MongoDB = require("./schemas/connect_db");
+const usersRouter = require("./routes/users.js");
+const chatsRouter = require("./routes/chats.js");
+const recommendsRouter = require("./routes/recommends.js");
 const cors = require('cors');
 const app = express();
 const port = 3000;
 require("dotenv").config();
-
-console.log(process.env.MONGO_DB);
-<<<<<<< HEAD
-=======
-
->>>>>>> 314d234cada3ba7bf19baec23756b6fad80deefe
 
 connect_MongoDB(); //DB 연결
 
@@ -22,6 +19,10 @@ app.use(cors({
 app.use(express.static("static"));
 app.use(express.json()); // json형태의 데이터를 parsing하여 사용할 수 있게 만듦.
 app.use(express.urlencoded({extended:false}));
+app.use("/users", [usersRouter]);
+app.use("/chats", [chatsRouter]);
+app.use("/recommends", [recommendsRouter]);
+
 
 app.listen(port, () => {
   console.log(port, "포트로 서버가 켜졌습니다.");
