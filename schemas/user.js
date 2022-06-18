@@ -38,6 +38,18 @@ const UserSchema = new mongoose.Schema({
     type: Array,
     default: [],
   },
+  userIntro: {
+    type: String,
+    default: null
+  },
+  workPlace: {
+    type: String,
+    default: null
+  },
+  category: {
+    type: Array,
+    default: []
+  }
 });
 UserSchema.virtual("userId").get(function () {
   return this._id.toHexString();

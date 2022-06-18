@@ -4,7 +4,6 @@ const usersRouter = require("./routes/users.js");
 const chatsRouter = require("./routes/chats.js");
 const recommendsRouter = require("./routes/recommends.js");
 const cors = require('cors');
-
 const app = express();
 const port = 3000;
 require("dotenv").config();

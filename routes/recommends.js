@@ -13,11 +13,13 @@ const recommend_Random = (array, num, ban) => {
   const user =  User.aggregate([
     {$match: { userEmail: query }}, 
     {$sample: { size: num }}, // 랜덤으로 뽑아올 개수 
-    {$project: { // 표기 안함
-          userEmail: false,
-          userPassword: false, like:  false, 
-          likeMe: false,   bad:   false, 
-          badMe: false,    __v:   false }}
+    {$project: { // 안가져오는 항목
+                  userEmail: false,
+                  userPassword: false, like:  false, 
+                  likeMe: false,   bad:   false, 
+                  badMe: false,    __v:   false 
+               }
+    }
   ]);
 
   return user;
@@ -112,7 +114,6 @@ router.post("/select", authMiddlewares, async (req, res) => {
 
   res.status(200).send({ users });
 });
-
 
 
 //더미 데이터 넣기 - 테스트용
