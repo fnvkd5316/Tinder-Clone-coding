@@ -13,7 +13,7 @@ const ChatSchema = new mongoose.Schema({
   userId_B: {
     type: String,
     required: true,
-  }
+  },
 });
 
 module.exports = mongoose.model("Chat", ChatSchema);

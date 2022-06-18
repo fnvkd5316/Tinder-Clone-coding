@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const User = require("../schemas/users");
+const User = require("../schemas/user");
 require("dotenv").config();
 
 module.exports = (req, res, next) => {
@@ -15,8 +15,8 @@ module.exports = (req, res, next) => {
   }
 
   try {
-    const { userId } = jwt.verify(tokenValue, process.env.SECRET_KEY);
-    User.findById(userId)
+    const { id } = jwt.verify(tokenValue, process.env.SECRET_KEY);
+    User.findOne(id)
       .exec()
       .then((user) => {
         res.locals.user = user;
@@ -28,6 +28,7 @@ module.exports = (req, res, next) => {
         }
       });
   } catch (err) {
+    console.log(err);
     res.status(401).send({
       errorMessage: "로그인 후 이용 가능합니다.",
     });

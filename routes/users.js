@@ -108,7 +108,7 @@ router.get("/auth", authMiddlewares, async (req, res) => {
   try {
     const { user } = res.locals;
     res.status(200).send({
-      user: { userId: user.userId },
+      user: { userId: user.id },
     });
   } catch (error) {
     console.log(error);
