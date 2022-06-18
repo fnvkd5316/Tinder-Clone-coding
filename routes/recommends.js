@@ -3,15 +3,22 @@ const router = express.Router();
 const User = require("../schemas/user.js");
 const Chat = require("../schemas/chat.js");
 const authMiddlewares = require("../middlewares/authconfirm.js");
+const mongoose = require("mongoose");
 
 const recommend_Random = (array, num, ban) => {
   
+  // 집계 파이프라인에서는 auto casting이 일어나지 않으므로 
+  // 캐스팅한다 
+  array = array.map((element) => {
+    return mongoose.Types.ObjectId(element);
+  });
+
   // $nin : 배열내 요소를 제외하고 검색
   // $in  : 배열내 요소를 검색
   let query = ban ? { $nin: array } : { $in: array };
   
   const user =  User.aggregate([
-    {$match: { userEmail: query }}, 
+    {$match: { _id: query }}, 
     {$sample: { size: num }}, // 랜덤으로 뽑아올 개수 
     {$project: { // 안가져오는 항목
                   userEmail: false,
@@ -78,8 +85,8 @@ router.post("/select", authMiddlewares, async (req, res) => {
 
   const me = res.locals.user;
   const other = await User.findById( selectId ); 
-  const me_info = me.userEmail;
-  const other_info = other.userEmail;
+  const me_info = me.userId;
+  const other_info = other.userId;
 
   if ( !me || !other ) {
     return  res.status(401).send({
