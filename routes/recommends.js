@@ -13,10 +13,10 @@ const recommend_Random = (array, num, ban) => {
     {$match: { userId: query }}, 
     {$sample: { size: num }}, // 랜덤으로 검색할 개수 
     {$project: { //표기 안함
-          _id:   false, password: false,
-          like:  false, likeMe: false,
-          bad:   false, badMe: false,
-          __v:   false }}
+          _id:   false,    userEmail: false,
+          password: false, like:  false, 
+          likeMe: false,   bad:   false, 
+          badMe: false,    __v:   false }}
   ]);
 
   return user;
@@ -27,7 +27,7 @@ router.get("/", authMiddlewares, async (req, res) => {
 
   const me = res.locals.user;
   let users = [];
-  const ban_array = [...me.like, ...me.bad, ...me.badMe, myId]; //검색 안되야할 목록
+  const ban_array = [...me.like, ...me.bad, ...me.badMe, me.userId]; //검색 안되야할 목록
 
   if (me.likeMe.length > 1) {   
 
@@ -39,7 +39,7 @@ router.get("/", authMiddlewares, async (req, res) => {
     // likeME == 1: 1명 올리고, 1명은 랜덤 // like, likeMe, badMe 제외
     ban_array.push(me.likeMe);
     users.push( await recommend_Random(ban_array, 1, true) );
-    users.push( await User.findOne({userId: me.likeMe}) );
+    users.push( await User.findbyId(me.likeMe) );
 
   } else {
     // likeMe == 0: 2명 랜덤 // like , likeMe, badMe 제외
@@ -97,7 +97,7 @@ router.post("/add", async (req, res) => {
   for ( let i = 1; i < 31; i++ ) {
   
     const user = new User({ 
-        userId: `${name}_${i}@email.com`, 
+        userEmail: `${name}_${i}@email.com`, 
         password: "1234qwer",
         userName: `${name}_${i}`,
         userAge: i,
