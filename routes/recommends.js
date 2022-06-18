@@ -3,11 +3,29 @@ const router = express.Router();
 const User = require("../schemas/user.js");
 const Chat = require("../schemas/chat.js");
 
+function recommend_Random(array, num, ban) {
+
+  // $nin : 배열을 요소를 제외하고 검색
+  // $in  : 배열을 요소를 검색
+  let query = ban ? { $nin: array } : { $in: array };
+  let user = null;
+
+  user =  User.aggregate([
+    {$match: { userId: query }}, 
+    {$sample: { size: num }}, // 랜덤으로 검색할 개수 
+    {$project: { //표기 안함
+          _id:   false, password: false,
+          like:  false, likeMe: false,
+          bad:   false, badMe: false,
+          __v:   false }}
+  ]);
+
+  return user;
+};
+
 //미들웨어 구현되면 넣기
-
 router.get("/", async (req, res) => {
-  const myId = "김형근_1"; //미들웨어 Id 넣음
-
+  const myId = "김형근_1"; //미들웨어 구현되면 Id 넣음
   const me = await User.findOne({ userId: myId });
 
   if (!me) {
@@ -16,24 +34,33 @@ router.get("/", async (req, res) => {
     });
   }
 
-  // if (me.likeMe.length >= 2) {
-  //   //이용해서 두명
-  // } else if ( me.likeMe.length === 1 ) {
+  let users = [];
+  const ban_array = [...me.like, ...me.bad, ...me.badMe, myId];
 
-  // } else {
+  if (me.likeMe.length > 1) {   
 
-  // }
-  console.log(1);
+    // likeMe >  1:  2명을 뽑아서 올린다.
+    users = await recommend_Random(me.likeMe, 2, false);
 
-  const users = User.aggregate({$sample:{size: 2}});
+  } else if ( me.likeMe.length === 1 ) {
 
-  console.log(2);
+    // likeME == 1: 1명 올리고, 1명은 랜덤 // like, likeMe, badMe 제외
+    ban_array.push(me.likeMe);
+    users.push( await recommend_Random(ban_array, 1, true) );
+    users.push( await User.findOne({userId: me.likeMe}) );
 
+  } else {
+    // likeMe == 0: 2명 랜덤 // like , likeMe, badMe 제외
+    users = await recommend_Random(ban_array, 2, true);
+  }
 
-  res.status(200).send({
-    result: "success",
-    users
-  });
+  if ( users.length === 0) {
+    return res.status(401).send({
+      errorMessage: "검색된 유저가 없습니다."
+    });
+  }
+
+  res.status(200).send({ users });
 });
 
 
@@ -70,8 +97,6 @@ router.post("/select", async (req, res) => {
     result: "success",
   });
 });
-
-
 
 
 //더미 데이터 넣기
