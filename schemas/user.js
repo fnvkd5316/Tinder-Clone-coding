@@ -22,6 +22,9 @@ const UserSchema = new mongoose.Schema({
     type: String,
     // required: true,
   },
+  refresh_token: {
+    type: String,
+  },
   like: {
     type: Array,
     default: [],

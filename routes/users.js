@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const { hash, compare } = require("bcryptjs");
+const { startSession } = require("mongoose");
 const multer = require("multer");
 const path = require("path");
 const authMiddlewares = require("../middlewares/authconfirm");
@@ -29,13 +30,16 @@ const upload = multer({
 });
 
 router.post("/signup", upload.single("imageUrl"), async (req, res) => {
+  const session = await startSession();
   try {
+    session.startTransaction();
     const { userEmail, password, userName, userAge } = req.body;
-
+    // 이메일 형식
     const re_userEmail = /^[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/i;
+    // 최소 8자 최대 16자 영문, 숫자, 특수문자 최소 한가지씩 입력
     const re_password = /^(?=.*[a-zA-z])(?=.*[0-9])(?=.*[$`~!@$!%*#^?&\\(\\)\-_=+]).{8,16}$/;
 
-    if (userId.search(re_userEmail) == -1) {
+    if (userEmail.search(re_userEmail) == -1) {
       res.status(400).send({
         errormassage: "이메일 형식이 아닙니다",
       });
@@ -49,19 +53,22 @@ router.post("/signup", upload.single("imageUrl"), async (req, res) => {
       return;
     }
 
-    const existuser = await User.find({ $or: [{ userEmail }, { userName }] });
+    const existuser = await User.find({ $or: [{ userEmail }, { userName }] }, { session });
     if (existuser.length) {
       res.status(400).send({
         errormassage: "이미 가입된 이메일 또는 닉네임이 있습니다.",
       });
       return;
     }
-
+    await session.abortTransaction();
     const userPassword = await hash(password, 10);
     const imageUrl = req.file.filename;
-    const user = await User.create({ userEmail, userPassword, userName, userAge, imageUrl });
+    const user = await User.create({ userEmail, userPassword, userName, userAge, imageUrl }, { session });
+    await session.commitTransaction();
+    session.endSession();
     res.status(201).send({ user });
   } catch (error) {
+    session.endSession();
     res.status(400).send({
       errormassage: "요청한 데이터 형식이 올바르지 않습니다.",
     });
@@ -71,7 +78,7 @@ router.post("/signup", upload.single("imageUrl"), async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const { userEmail, password } = req.body;
-    const user = await User.findOne({ userId });
+    const user = await User.findOne({ userEmail });
     const re_userEmail = /^[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/i;
     const re_password = /^(?=.*[a-zA-z])(?=.*[0-9])(?=.*[$`~!@$!%*#^?&\\(\\)\-_=+]).{8,16}$/;
 
@@ -94,8 +101,11 @@ router.post("/login", async (req, res) => {
       });
       return;
     }
-    const token = jwt.sign({ userId: user.userId, imageUrl: user.imageUrl }, process.env.SECRET_KEY, { expiresIn: "6h" });
-    res.status(201).send({ token });
+    const token = jwt.sign({ userName: user.userName, imageUrl: user.imageUrl }, process.env.SECRET_KEY, { expiresIn: "30m" });
+    const refresh_token = jwt.sign({}, process.env.SECRET_KEY, { expiresIn: "6h" });
+    // 만료된 토큰 재갱신
+    await User.updateOne({ refresh_token }, { where: { userId: user.userId } });
+    res.status(201).send({ token, refresh_token });
   } catch (error) {
     console.log(error);
     res.status(400).send({
@@ -108,7 +118,10 @@ router.get("/auth", authMiddlewares, async (req, res) => {
   try {
     const { user } = res.locals;
     res.status(200).send({
-      user: { userId: user.id },
+      user: {
+        userName: user.userName,
+        imageUrl: user.imageUrl,
+      },
     });
   } catch (error) {
     console.log(error);
