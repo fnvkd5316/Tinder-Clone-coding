@@ -2,15 +2,14 @@ const express = require("express");
 const router = express.Router();
 const User = require("../schemas/user.js");
 const Chat = require("../schemas/chat.js");
+const authMiddlewares = require("../middlewares/authconfirm.js");
 
-function recommend_Random(array, num, ban) {
-
+const recommend_Random = (array, num, ban) => {
   // $nin : 배열을 요소를 제외하고 검색
   // $in  : 배열을 요소를 검색
   let query = ban ? { $nin: array } : { $in: array };
-  let user = null;
-
-  user =  User.aggregate([
+  
+  const user =  User.aggregate([
     {$match: { userId: query }}, 
     {$sample: { size: num }}, // 랜덤으로 검색할 개수 
     {$project: { //표기 안함
@@ -24,18 +23,11 @@ function recommend_Random(array, num, ban) {
 };
 
 //미들웨어 구현되면 넣기
-router.get("/", async (req, res) => {
-  const myId = "김형근_1"; //미들웨어 구현되면 Id 넣음
-  const me = await User.findOne({ userId: myId });
+router.get("/", authMiddlewares, async (req, res) => {
 
-  if (!me) {
-    return  res.status(400).send({
-      errorMessage: "내 정보를 찾을 수 없습니다."
-    });
-  }
-
+  const me = res.locals.user;
   let users = [];
-  const ban_array = [...me.like, ...me.bad, ...me.badMe, myId];
+  const ban_array = [...me.like, ...me.bad, ...me.badMe, myId]; //검색 안되야할 목록
 
   if (me.likeMe.length > 1) {   
 
@@ -64,13 +56,13 @@ router.get("/", async (req, res) => {
 });
 
 
-router.post("/select", async (req, res) => {
+router.post("/select", authMiddlewares, async (req, res) => {
 
-  const myId = "test1"; //미들웨어 Id 넣음
+  const me = res.locals.user;
   const { selectId, select } = req.body;
 
-  const me = await User.findOne({ userId: myId });
-  const other = await User.findOne({ userId: selectId });
+  // 좋아요, 싫어요 받은 대상
+  const other = await User.findById( selectId ); 
 
   if ( !me || !other ) {
     return  res.status(400).send({
@@ -87,8 +79,6 @@ router.post("/select", async (req, res) => {
   } else {
 
   }
-
-  me.likeMe.find(selectId);
 
   me.save();
   other.save();
@@ -107,7 +97,7 @@ router.post("/add", async (req, res) => {
   for ( let i = 1; i < 31; i++ ) {
   
     const user = new User({ 
-        userId: `${name}_${i}`, 
+        userId: `${name}_${i}@email.com`, 
         password: "1234qwer",
         userName: `${name}_${i}`,
         userAge: i,
