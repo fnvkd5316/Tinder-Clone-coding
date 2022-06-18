@@ -75,7 +75,7 @@ router.post("/login", async (req, res) => {
     const re_userEmail = /^[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/i;
     const re_password = /^(?=.*[a-zA-z])(?=.*[0-9])(?=.*[$`~!@$!%*#^?&\\(\\)\-_=+]).{8,16}$/;
 
-    if (userId.search(re_userEmail) == -1) {
+    if (userEmail.search(re_userEmail) == -1) {
       res.status(400).send({
         errormassage: "이메일 형식이 아닙니다.",
       });
