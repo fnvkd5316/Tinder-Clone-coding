@@ -70,8 +70,9 @@ router.post("/select", async (req, res) => {
 router.post("/add", async (req, res) => {
   const { name } = req.body;
 
+  const { name } = req.body;
+
   for (let i = 1; i < 31; i++) {
-    console.log(i);
     const user = new User({
       userId: `${name}_${i}`,
       password: "1234qwer",
