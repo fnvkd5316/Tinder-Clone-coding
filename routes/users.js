@@ -49,10 +49,10 @@ router.post("/signup", upload.single("imageUrl"), async (req, res) => {
       return;
     }
 
-    const existuser = await User.find({ $or: [{ userEmail }, { userName }] });
+    const existuser = await User.find({ userEmail });
     if (existuser.length) {
       res.status(400).send({
-        errormassage: "이미 가입된 이메일 또는 닉네임이 있습니다.",
+        errormassage: "해당 이메일은 이미 가입된 이메일입니다.",
       });
       return;
     }
@@ -98,6 +98,7 @@ router.post("/login", async (req, res) => {
     }
 
     const token = jwt.sign({ userId: user.userId, imageUrl: user.imageUrl }, process.env.SECRET_KEY, { expiresIn: "6h" });
+
     res.status(201).send({ token });
   } catch (error) {
     console.log(error);
@@ -121,4 +122,42 @@ router.get("/auth", authMiddlewares, async (req, res) => {
   }
 });
 
+// 나의 상세정보 조회 
+router.get("/personal", authMiddlewares, async (req, res) => {
+  try {
+    const { user } = res.locals;
+    res.status(200).send({
+      user: { 
+        userName: user.userName,
+        userEmail: user.userEmail,
+        userIntro: user.userIntro,
+        category: user.category,
+        imageUrl: user.imageUrl,
+        workPlace: user.workPlace        
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(400).send({
+      errormassage: "상세 정보를 가져오지 못하였습니다.",
+    });
+  }
+});
+
+// 상세 정보 수정 
+router.put("/modify", authMiddlewares, async (req, res) => {
+  try {
+    const { user } = res.locals;
+    
+
+
+
+    
+  } catch (error) {
+    console.log(error);
+    res.status(400).send({
+      errormassage: "상세 정보를 가져오지 못하였습니다.",
+    });
+  }
+});
 module.exports = router;
