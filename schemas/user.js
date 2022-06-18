@@ -43,16 +43,16 @@ const UserSchema = new mongoose.Schema({
   },
   userIntro: {
     type: String,
-    default: null
+    default: null,
   },
   workPlace: {
     type: String,
-    default: null
+    default: null,
   },
   category: {
     type: Array,
-    default: []
-  }
+    default: [],
+  },
 });
 UserSchema.virtual("userId").get(function () {
   return this._id.toHexString();

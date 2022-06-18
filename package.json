@@ -28,5 +28,6 @@
   "bugs": {
     "url": "https://github.com/fnvkd5316/Tinder-Clone-coding/issues"
   },
-  "homepage": "https://github.com/fnvkd5316/Tinder-Clone-coding#readme"
+  "homepage": "https://github.com/fnvkd5316/Tinder-Clone-coding#readme",
+  "devDependencies": {}
 }

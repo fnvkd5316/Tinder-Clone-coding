@@ -11,9 +11,6 @@ const ChatSchema = new mongoose.Schema({
   },
 });
 
-<<<<<<< HEAD
-module.exports = mongoose.model("Chat", ChatSchema);
-=======
 ChatSchema.virtual("chatId").get(function () {
   return this._id.toHexString();
 });
@@ -22,4 +19,3 @@ ChatSchema.set("toJSON", {
 });
 
 module.exports = mongoose.model("Chat", ChatSchema);
->>>>>>> 3616ab37948a66964c067e46ec92c191663edba2
