@@ -3,8 +3,12 @@ const connect_MongoDB = require("./schemas/connect_db");
 const usersRouter = require("./routes/users.js");
 const chatsRouter = require("./routes/chats.js");
 const recommendsRouter = require("./routes/recommends.js");
+<<<<<<< HEAD
 const cors = require("cors");
 
+=======
+const cors = require('cors');
+>>>>>>> 3616ab37948a66964c067e46ec92c191663edba2
 const app = express();
 const port = 3000;
 require("dotenv").config();

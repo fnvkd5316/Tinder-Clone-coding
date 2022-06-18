@@ -53,19 +53,28 @@ router.post("/signup", upload.single("imageUrl"), async (req, res) => {
       return;
     }
 
+<<<<<<< HEAD
     const existuser = await User.find({ $or: [{ userEmail }, { userName }] }, { session });
+=======
+    const existuser = await User.find({ userEmail });
+>>>>>>> 3616ab37948a66964c067e46ec92c191663edba2
     if (existuser.length) {
       res.status(400).send({
-        errormassage: "이미 가입된 이메일 또는 닉네임이 있습니다.",
+        errormassage: "해당 이메일은 이미 가입된 이메일입니다.",
       });
       return;
     }
     await session.abortTransaction();
     const userPassword = await hash(password, 10);
     const imageUrl = req.file.filename;
+<<<<<<< HEAD
     const user = await User.create({ userEmail, userPassword, userName, userAge, imageUrl }, { session });
     await session.commitTransaction();
     session.endSession();
+=======
+    const user = await User.create({ userEmail, userPassword, userName, userAge, imageUrl });
+ 
+>>>>>>> 3616ab37948a66964c067e46ec92c191663edba2
     res.status(201).send({ user });
   } catch (error) {
     session.endSession();
@@ -76,7 +85,7 @@ router.post("/signup", upload.single("imageUrl"), async (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-  try {
+ try {
     const { userEmail, password } = req.body;
     const user = await User.findOne({ userEmail });
     const re_userEmail = /^[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/i;
@@ -94,6 +103,7 @@ router.post("/login", async (req, res) => {
       });
       return;
     }
+
     const isValid = await compare(password, user.userPassword);
     if (!isValid) {
       res.status(400).send({
@@ -101,11 +111,18 @@ router.post("/login", async (req, res) => {
       });
       return;
     }
+<<<<<<< HEAD
     const token = jwt.sign({ userName: user.userName, imageUrl: user.imageUrl }, process.env.SECRET_KEY, { expiresIn: "30m" });
     const refresh_token = jwt.sign({}, process.env.SECRET_KEY, { expiresIn: "6h" });
     // 만료된 토큰 재갱신
     await User.updateOne({ refresh_token }, { where: { userId: user.userId } });
     res.status(201).send({ token, refresh_token });
+=======
+
+    const token = jwt.sign({ userId: user.userId, imageUrl: user.imageUrl }, process.env.SECRET_KEY, { expiresIn: "6h" });
+
+    res.status(201).send({ token });
+>>>>>>> 3616ab37948a66964c067e46ec92c191663edba2
   } catch (error) {
     console.log(error);
     res.status(400).send({
@@ -131,4 +148,46 @@ router.get("/auth", authMiddlewares, async (req, res) => {
   }
 });
 
+<<<<<<< HEAD
 module.exports = router;
+=======
+// 나의 상세정보 조회 
+router.get("/personal", authMiddlewares, async (req, res) => {
+  try {
+    const { user } = res.locals;
+    res.status(200).send({
+      user: { 
+        userName: user.userName,
+        userEmail: user.userEmail,
+        userIntro: user.userIntro,
+        category: user.category,
+        imageUrl: user.imageUrl,
+        workPlace: user.workPlace        
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(400).send({
+      errormassage: "상세 정보를 가져오지 못하였습니다.",
+    });
+  }
+});
+
+// 상세 정보 수정 
+router.put("/modify", authMiddlewares, async (req, res) => {
+  try {
+    const { user } = res.locals;
+    
+
+
+
+    
+  } catch (error) {
+    console.log(error);
+    res.status(400).send({
+      errormassage: "상세 정보를 가져오지 못하였습니다.",
+    });
+  }
+});
+module.exports = router;
+>>>>>>> 3616ab37948a66964c067e46ec92c191663edba2
