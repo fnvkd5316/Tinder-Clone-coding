@@ -49,10 +49,10 @@ router.post("/signup", upload.single("imageUrl"), async (req, res) => {
       return;
     }
 
-    const existuser = await User.find({ $or: [{ userEmail }, { userName }] });
+    const existuser = await User.find({ userEmail });
     if (existuser.length) {
       res.status(400).send({
-        errormassage: "이미 가입된 이메일 또는 닉네임이 있습니다.",
+        errormassage: "해당 이메일은 이미 가입된 이메일입니다.",
       });
       return;
     }
