@@ -6,14 +6,13 @@ const UserSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
-  password: {
+  userPassword: {
     type: String,
-    required: true,
+    // required: true,
   },
   userName: {
     type: String,
     required: true,
-    unique: true,
   },
   userAge: {
     type: Number,
@@ -21,7 +20,7 @@ const UserSchema = new mongoose.Schema({
   },
   imageUrl: {
     type: String,
-    required:true,
+    // required: true,
   },
   like: {
     type: Array,
@@ -38,7 +37,13 @@ const UserSchema = new mongoose.Schema({
   badMe: {
     type: Array,
     default: [],
-  }
+  },
+});
+UserSchema.virtual("id").get(function () {
+  return this._id.toHexString();
+});
+UserSchema.set("toJSON", {
+  virtuals: true,
 });
 
 module.exports = mongoose.model("User", UserSchema);
