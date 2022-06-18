@@ -3,25 +3,46 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 const { hash, compare } = require("bcryptjs");
 const multer = require("multer");
-const authorization = require("../middlewares/authconfirm");
+const path = require("path");
+const authMiddlewares = require("../middlewares/authconfirm");
 const User = require("../schemas/user");
 require("dotenv").config();
 
-router.post("/signup", async (req, res) => {
+const upload = multer({
+  dest: "static/",
+  storage: multer.diskStorage({
+    destination(req, file, cb) {
+      cb(null, "./static");
+    },
+    filename(req, file, cb) {
+      const ext = path.extname(file.originalname);
+      cb(null, path.basename(file.originalname, ext) + Date.now() + ext);
+    },
+    fileFilter: (req, file, cb) => {
+      if (["image/png", "image/jpg", "image/jpeg"].includes(file.mimetype)) cd(null, true);
+      else cd(Error("PNG, jpeg만 업로드 하세요"), false);
+    },
+    limits: {
+      fileSize: 1024 * 1024 * 5,
+    },
+  }),
+});
+
+router.post("/signup", upload.single("imageUrl"), async (req, res) => {
   try {
     const { userId, password, userName, userAge } = req.body;
 
-    re_userId = /^[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/i;
-    re_password = /^(?=.*[a-zA-z])(?=.*[0-9])(?=.*[$`~!@$!%*#^?&\\(\\)\-_=+]).{8,16}$/;
+    const re_userId = /^[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/i;
+    const re_password = /^(?=.*[a-zA-z])(?=.*[0-9])(?=.*[$`~!@$!%*#^?&\\(\\)\-_=+]).{8,16}$/;
 
-    if (userId.include(re_userId) == false) {
+    if (userId.search(re_userId) == -1) {
       res.status(400).send({
         errormassage: "이메일 형식이 아닙니다",
       });
       return;
     }
 
-    if (password.include(re_password) == false) {
+    if (password.search(re_password) == -1) {
       res.status(400).send({
         errormassage: "8 ~ 16자 영문, 숫자, 특수문자를 최소 한가지씩 입력해야 합니다",
       });
@@ -29,7 +50,7 @@ router.post("/signup", async (req, res) => {
     }
 
     const existuser = await User.find({ $or: [{ userId }, { userName }] });
-    if (existuser.lenght) {
+    if (existuser.length) {
       res.status(400).send({
         errormassage: "이미 가입된 이메일 또는 닉네임이 있습니다.",
       });
@@ -37,20 +58,12 @@ router.post("/signup", async (req, res) => {
     }
 
     const userPassword = await hash(password, 10);
-
-    const user = await User.create({
-      userId,
-      password,
-      userName,
-      userAges,
-      userPassword,
-      ImageUrl,
-    });
-
-    res.status(200).send({ user });
+    const imageUrl = req.file.filename;
+    const user = await User.create({ userId, userPassword, userName, userAge, imageUrl });
+    res.status(201).send({ user });
   } catch (error) {
     res.status(400).send({
-      errormassage: "데이터 형식이 맞이 않습니다.",
+      errormassage: "요청한 데이터 형식이 올바르지 않습니다.",
     });
   }
 });
@@ -59,23 +72,21 @@ router.post("/login", async (req, res) => {
   try {
     const { userId, password } = req.body;
     const user = await User.findOne({ userId });
-    re_userId = /^[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/i;
-    re_password = /^(?=.*[a-zA-z])(?=.*[0-9])(?=.*[$`~!@$!%*#^?&\\(\\)\-_=+]).{8,16}$/;
+    const re_userId = /^[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/i;
+    const re_password = /^(?=.*[a-zA-z])(?=.*[0-9])(?=.*[$`~!@$!%*#^?&\\(\\)\-_=+]).{8,16}$/;
 
-    if (userId.include(re_userId) == false) {
+    if (userId.search(re_userId) == -1) {
       res.status(400).send({
         errormassage: "이메일 형식이 아닙니다.",
       });
       return;
     }
-    if (password.include(re_password) == false) {
+    if (password.search(re_password) == -1) {
       res.status(400).send({
         errormassage: "8 ~ 16자 영문, 숫자, 특수문자를 최소 한가지씩 입력해야 합니다",
       });
       return;
     }
-
-<<<<<<< HEAD
     const isValid = await compare(password, user.userPassword);
     if (!isValid) {
       res.status(400).send({
@@ -83,34 +94,28 @@ router.post("/login", async (req, res) => {
       });
       return;
     }
-    const token = jwt.sign({ userid: user.usr });
-  } catch (error) {}
-});
-
-module.exports = router;
-=======
-
-
-//더미 데이터 넣기
-router.post("/add", async (req, res) => {
-  
-  let name = "김형근"
-
-
-
-  for( let i = 0; i < 30; i++){
-
-    setname = `${name}_${i}`;
-
-
+    const token = jwt.sign({ userName: user.userName, profileimage: user.imageUrl }, process.env.SECRET_KEY, { expiresIn: "6h" });
+    res.status(201).send({ token });
+  } catch (error) {
+    console.log(error);
+    res.status(400).send({
+      errormassage: "아이디 또는 비밀번호를 확인해주세요",
+    });
   }
+});
 
-
-
-  res.status(200).send({
-    msg: "성공"  
-  });
+router.get("/auth", authMiddlewares, async (req, res) => {
+  try {
+    const { user } = res.locals;
+    res.status(200).send({
+      user: { userId: user.userId },
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(400).send({
+      errormassage: "사용자 정보를 가져오지 못하였습니다.",
+    });
+  }
 });
 
 module.exports = router;
->>>>>>> 62395b61cca9d00864ed90f8d8151bd85f97ce5a

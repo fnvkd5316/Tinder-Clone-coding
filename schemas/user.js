@@ -6,24 +6,13 @@ const UserSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
-  password: {
+  userPassword: {
     type: String,
-    required: true,
+    // required: true,
   },
   userName: {
     type: String,
     required: true,
-<<<<<<< HEAD
-  },
-  userAge: {
-    type: String,
-    required: true,
-  },
-  ImageUrl: {
-    type: String,
-    required: true,
-=======
-    unique: true,
   },
   userAge: {
     type: Number,
@@ -31,8 +20,7 @@ const UserSchema = new mongoose.Schema({
   },
   imageUrl: {
     type: String,
-    required:true,
->>>>>>> 62395b61cca9d00864ed90f8d8151bd85f97ce5a
+    // required: true,
   },
   like: {
     type: Array,
@@ -49,14 +37,13 @@ const UserSchema = new mongoose.Schema({
   badMe: {
     type: Array,
     default: [],
-<<<<<<< HEAD
   },
 });
-
-module.exports = { User: mongoose.model("User", UserSchema) };
-=======
-  }
+UserSchema.virtual("id").get(function () {
+  return this._id.toHexString();
+});
+UserSchema.set("toJSON", {
+  virtuals: true,
 });
 
 module.exports = mongoose.model("User", UserSchema);
->>>>>>> 62395b61cca9d00864ed90f8d8151bd85f97ce5a
