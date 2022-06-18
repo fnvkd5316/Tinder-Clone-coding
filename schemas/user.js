@@ -1,10 +1,10 @@
 const mongoose = require("mongoose");
 
 const UserSchema = new mongoose.Schema({
-  userId: {
+  emailId: {
     type: String,
     required: true,
-    unique: true,
+    unique: true,    
   },
   userPassword: {
     type: String,
@@ -39,7 +39,7 @@ const UserSchema = new mongoose.Schema({
     default: [],
   },
 });
-UserSchema.virtual("id").get(function () {
+UserSchema.virtual("userId").get(function () {
   return this._id.toHexString();
 });
 UserSchema.set("toJSON", {
