@@ -35,7 +35,7 @@ router.post("/signup", upload.single("imageUrl"), async (req, res) => {
     const re_userEmail = /^[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/i;
     const re_password = /^(?=.*[a-zA-z])(?=.*[0-9])(?=.*[$`~!@$!%*#^?&\\(\\)\-_=+]).{8,16}$/;
 
-    if (userId.search(re_userEmail) == -1) {
+    if (userEmail.search(re_userEmail) == -1) {
       res.status(400).send({
         errormassage: "이메일 형식이 아닙니다",
       });
@@ -60,6 +60,7 @@ router.post("/signup", upload.single("imageUrl"), async (req, res) => {
     const userPassword = await hash(password, 10);
     const imageUrl = req.file.filename;
     const user = await User.create({ userEmail, userPassword, userName, userAge, imageUrl });
+ 
     res.status(201).send({ user });
   } catch (error) {
     res.status(400).send({
@@ -69,13 +70,13 @@ router.post("/signup", upload.single("imageUrl"), async (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-  try {
+ try {
     const { userEmail, password } = req.body;
-    const user = await User.findOne({ userId });
+    const user = await User.findOne({ userEmail });
     const re_userEmail = /^[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/i;
     const re_password = /^(?=.*[a-zA-z])(?=.*[0-9])(?=.*[$`~!@$!%*#^?&\\(\\)\-_=+]).{8,16}$/;
 
-    if (userId.search(re_userEmail) == -1) {
+    if (userEmail.search(re_userEmail) == -1) {
       res.status(400).send({
         errormassage: "이메일 형식이 아닙니다.",
       });
@@ -87,6 +88,7 @@ router.post("/login", async (req, res) => {
       });
       return;
     }
+
     const isValid = await compare(password, user.userPassword);
     if (!isValid) {
       res.status(400).send({
@@ -94,6 +96,7 @@ router.post("/login", async (req, res) => {
       });
       return;
     }
+
     const token = jwt.sign({ userId: user.userId, imageUrl: user.imageUrl }, process.env.SECRET_KEY, { expiresIn: "6h" });
     res.status(201).send({ token });
   } catch (error) {

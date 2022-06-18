@@ -1,11 +1,6 @@
 const mongoose = require("mongoose");
 
 const ChatSchema = new mongoose.Schema({
-  chatId: {
-    type: String,
-    required: true,
-    unique: true,
-  },
   userId_A: {
     type: String,
     required: true,
@@ -14,6 +9,13 @@ const ChatSchema = new mongoose.Schema({
     type: String,
     required: true,
   }
+});
+
+ChatSchema.virtual("chatId").get(function () {
+  return this._id.toHexString();
+});
+ChatSchema.set("toJSON", {
+  virtuals: true,
 });
 
 module.exports = mongoose.model("Chat", ChatSchema);
