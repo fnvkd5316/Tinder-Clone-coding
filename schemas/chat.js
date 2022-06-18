@@ -11,10 +11,10 @@ const ChatSchema = new mongoose.Schema({
   }
 });
 
-UserSchema.virtual("chatId").get(function () {
+ChatSchema.virtual("chatId").get(function () {
   return this._id.toHexString();
 });
-UserSchema.set("toJSON", {
+ChatSchema.set("toJSON", {
   virtuals: true,
 });
 

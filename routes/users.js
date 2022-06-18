@@ -60,6 +60,7 @@ router.post("/signup", upload.single("imageUrl"), async (req, res) => {
     const userPassword = await hash(password, 10);
     const imageUrl = req.file.filename;
     const user = await User.create({ userEmail, userPassword, userName, userAge, imageUrl });
+ 
     res.status(201).send({ user });
   } catch (error) {
     res.status(400).send({
@@ -69,9 +70,9 @@ router.post("/signup", upload.single("imageUrl"), async (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-  try {
+ try {
     const { userEmail, password } = req.body;
-    const user = await User.findOne({ userId });
+    const user = await User.findOne({ userEmail });
     const re_userEmail = /^[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/i;
     const re_password = /^(?=.*[a-zA-z])(?=.*[0-9])(?=.*[$`~!@$!%*#^?&\\(\\)\-_=+]).{8,16}$/;
 
@@ -95,6 +96,7 @@ router.post("/login", async (req, res) => {
       });
       return;
     }
+
     const token = jwt.sign({ userId: user.userId, imageUrl: user.imageUrl }, process.env.SECRET_KEY, { expiresIn: "6h" });
     res.status(201).send({ token });
   } catch (error) {
