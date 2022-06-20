@@ -7,8 +7,7 @@ const mongoose = require("mongoose");
 
 const recommend_Random = (array, num, ban) => {
   
-  // 집계 파이프라인에서는 auto casting이 일어나지 않으므로 
-  // 캐스팅한다 
+  // 집계 파이프라인에서는 auto casting이 일어나지 않으므로 캐스팅필요
   array = array.map((element) => {
     return mongoose.Types.ObjectId(element);
   });
@@ -18,14 +17,14 @@ const recommend_Random = (array, num, ban) => {
   let query = ban ? { $nin: array } : { $in: array };
   
   const user =  User.aggregate([
-    {$match: { _id: query }}, 
-    {$sample: { size: num }}, // 랜덤으로 뽑아올 개수 
-    {$project: { // 안가져오는 항목
-                  userEmail: false,
-                  userPassword: false, like:  false, 
-                  likeMe: false,   bad:   false, 
-                  badMe: false,    __v:   false 
-               }
+    {$match:  { _id: query }}, 
+    {$sample: { size: num  }}, // 랜덤으로 뽑아올 개수 
+    {$project:{ // 안가져오는 항목
+                userEmail: false,
+                userPassword: false, like:  false, 
+                likeMe: false,   bad:   false, 
+                badMe: false,    __v:   false 
+              }
     }
   ]);
 
@@ -45,21 +44,18 @@ router.get("/", authMiddlewares, async (req, res) => {
 
   let users = [];
 
-  if (me.likeMe.length > 1) {   
+  if (me.likeMe.length > 1) {  // likeMe >  1:  2명을 뽑아서 올린다.  
 
-    // likeMe >  1:  2명을 뽑아서 올린다.
     users = await recommend_Random(me.likeMe, 2, false);
 
-  } else if ( me.likeMe.length === 1 ) {
+  } else if ( me.likeMe.length === 1 ) { // likeME == 1: 1명 올리고, 1명은 랜덤 // like, likeMe, badMe 제외
 
-    // likeME == 1: 1명 올리고, 1명은 랜덤 // like, likeMe, badMe 제외
     users.push( await User.findbyId(me.likeMe) );
-
     ban_array.push(me.likeMe);
     users.push( await recommend_Random(ban_array, 1, true) );
 
-  } else {
-    // likeMe == 0: 2명 랜덤 // like , likeMe, badMe 제외
+  } else { // likeMe == 0: 2명 랜덤 // like , likeMe, badMe 제외
+
     users = await recommend_Random(ban_array, 2, true);
   }
 
@@ -75,7 +71,7 @@ router.get("/", authMiddlewares, async (req, res) => {
 
 router.post("/select", authMiddlewares, async (req, res) => {
 
-  try{
+  try {
     var { selectId, select } = req.body;
   } catch {
     return res.status(400).send({
@@ -100,16 +96,18 @@ router.post("/select", authMiddlewares, async (req, res) => {
 
     // if (me.likeMe.includes(other_info)){
     // 해당기능 승완님 요청으로 우선 봉인
-    // const chat = await new Chat({ userId_A: me_info, userId_B: other_info }); //chat 서버에 추가한다.
-    // chat.save();
+      // const chat = await new Chat({ userId_A: me_info, userId_B: other_info }); //chat 서버에 추가한다.
+      // chat.save();
     // }
   } else { // 싫어요
     me.bad.push(other_info);
     other.badMe.push(me_info);
   }
 
-  if ( me.likeMe.length ) {
-    var users = await recommend_Random(me.likeMe, 1, false);
+  const likeMe_not_in_like = me.likeMe.filter(userId => me.like.includes(userId) === false );
+
+  if ( likeMe_not_in_like.length ) {
+    var users = await recommend_Random(likeMe_not_in_like, 1, false);
   } else {
     const ban_array = [...me.like, ...me.bad, ...me.badMe]; //검색 안되야할 목록
     ban_array.push(me_info);
