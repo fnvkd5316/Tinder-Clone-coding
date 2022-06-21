@@ -157,17 +157,17 @@ router.get("/personal", authMiddlewares, async (req, res) => {
 });
 
 const deleteImage = (imgName) => {
-  fs.exists("./static/" + imgName, (e) => {
-    console.log("파일 존재: ", e);
+  const exist = fs.existsSync("./static/" + imgName);
 
-    if (e) {
-      fs.unlink("./static/" + imgName, (err) => {
-        if (err) {
-          console.log("파일삭제 실패: ", err);
-        }
-      });
-    }
-  }); 
+  console.log("파일 존재: ", exist);  
+
+  if (exist) {
+    fs.unlink("./static/" + imgName, (err) => {
+      if (err) {
+        console.log("파일삭제 실패: ", err);
+      }
+    });
+  }
 }
 
 // 상세 정보 수정 
