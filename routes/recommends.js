@@ -71,6 +71,21 @@ router.get("/", authMiddlewares, async (req, res) => {
           return user;
         })
     });
+
+    // res.status(200).send({ 
+    //   users: users.map( user => {
+    //     const setUser = {
+    //       userId: user._id,
+    //       userName: user.userName,
+    //       userAge: user.userAge,
+    //       imageUrl: process.env.IMAGE_IP + user.imageUrl,
+    //       userIntro: user.userIntro,
+    //       workPlace: user.workPlace,
+    //       category: user.category
+    //     }
+    //     return setUser;
+    //   })
+    // });        
   }
 });
 
@@ -124,10 +139,10 @@ router.post("/select", authMiddlewares, async (req, res) => {
   other.save();
 
   res.status(200).send({ 
-    users: users.map( user => {
-      user.imageUrl = process.env.IMAGE_IP + user.imageUrl;
-      return user;
-    })
+      users: users.map( user => {
+        user.imageUrl = process.env.IMAGE_IP + user.imageUrl;
+        return user;
+      })
   });
 });
 
@@ -157,7 +172,7 @@ router.post("/add", async (req, res) => {
   }
 
   res.status(200).send({
-    msg: "성공"  
+    msg: "테스트용 더미넣기 성공"  
   });
 });
 
