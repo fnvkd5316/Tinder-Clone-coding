@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../schemas/user.js");
-const Chat = require("../schemas/chat.js");
+// const Chat = require("../schemas/chat.js");
 const authMiddlewares = require("../middlewares/authconfirm.js");
 const mongoose = require("mongoose");
+require("dotenv").config();
 
 const recommend_Random = (array, num, ban) => {
   
@@ -63,9 +64,14 @@ router.get("/", authMiddlewares, async (req, res) => {
     return res.status(401).send({
       errorMessage: "검색된 유저가 없습니다."
     });
+  }else {
+    return res.status(200).send({ 
+        users: users.map( user => {
+          user.imageUrl = process.env.IMAGE_IP + user.imageUrl;
+          return user;
+        })
+    });
   }
-
-  res.status(200).send({ users });
 });
 
 
@@ -117,12 +123,17 @@ router.post("/select", authMiddlewares, async (req, res) => {
   me.save();
   other.save();
 
-  res.status(200).send({ users });
+  res.status(200).send({ 
+    users: users.map( user => {
+      user.imageUrl = process.env.IMAGE_IP + user.imageUrl;
+      return user;
+    })
+  });
 });
 
 
 //더미 데이터 넣기 - 테스트용
-const { hash, compare } = require("bcryptjs");
+const { hash, compare, compareSync } = require("bcryptjs");
 
 router.post("/add", async (req, res) => {
 
