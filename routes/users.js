@@ -122,8 +122,6 @@ router.post("/login", async (req, res) => {
       return;
     }
 
-    const isValid = await compare(password, user.userPassword);
-
     if (!isValid) {
       res.status(400).send({
         errormassage: "아이디나 비밀번호를 다시 확인해 주세요",
