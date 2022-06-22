@@ -114,7 +114,7 @@ router.post("/login", async (req, res) => {
       return;
     }
 
-    const token = jwt.sign({ userName: user.userName, imageUrl: user.imageUrl }, process.env.SECRET_KEY, { expiresIn: "1h" });
+    const token = jwt.sign({ userEmail: userEmail, userName: user.userName, imageUrl: user.imageUrl }, process.env.SECRET_KEY, { expiresIn: "1h" });
     const refresh_token = jwt.sign({}, process.env.SECRET_KEY, { expiresIn: "6h" });
     // 다시 로그인 시 만료된 refresh_token 재발급
     await User.updateOne({ userEmail }, { $set: { refresh_token } });
@@ -132,6 +132,7 @@ router.get("/auth", authMiddlewares, async (req, res) => {
     const { user } = res.locals;
     res.status(200).send({
       user: {
+        userEmail: user.userEmail,
         userName: user.userName,
         imageUrl: user.imageUrl,
       },
