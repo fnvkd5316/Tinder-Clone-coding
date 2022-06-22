@@ -5,7 +5,7 @@ const { hash, compare } = require("bcryptjs");
 const multer = require("multer");
 const path = require("path");
 const authMiddlewares = require("../middlewares/authconfirm");
-const User = require("../schemas/user");
+const {User} = require("../schemas/user");
 const fs = require("fs");
 require("dotenv").config();
 
@@ -16,9 +16,13 @@ const upload = multer({
       cb(null, "./static");
     },
     filename(req, file, cb) {
-      const ext = path.extname(file.originalname);
-      // cb(null, path.basename(file.originalname, ext) + Date.now() + ext);
-      cb(null, Date.now() + ext);
+      if ( file ) { 
+        const ext = path.extname(file.originalname);
+        // cb(null, path.basename(file.originalname, ext) + Date.now() + ext);
+        cb(null, Date.now() + ext);
+      }else{
+        console.log("파일 존재 안함");
+      }
     },
     fileFilter: (req, file, cb) => {
       if (["image/png", "image/jpg", "image/jpeg"].includes(file.mimetype)) cd(null, true);
@@ -104,7 +108,6 @@ router.post("/login", async (req, res) => {
     const re_password = /^(?=.*[a-zA-z])(?=.*[0-9])(?=.*[$`~!@$!%*#^?&\\(\\)\-_=+]).{8,16}$/;
     const isValid = await compare(password, user.userPassword);
 
-    console.log("id확인");
     if (userEmail.search(re_userEmail) == -1) {
       res.status(400).send({
         errormassage: "Email 형식이 아닙니다",
@@ -185,9 +188,7 @@ router.get("/personal", authMiddlewares, async (req, res) => {
 
 const deleteImage = (imgName) => {
   const exist = fs.existsSync("./static/" + imgName);
-
-  console.log("파일 존재: ", exist);  
-
+  console.log("파일삭제 존재하나요? : ", exist);  
   if (exist) {
     fs.unlink("./static/" + imgName, (err) => {
       if (err) {
@@ -199,40 +200,43 @@ const deleteImage = (imgName) => {
 
 // 상세 정보 수정 
 router.put("/modify", authMiddlewares, upload.single("imageUrl"), async (req, res) => {
+
   try {
     var { user } = res.locals;
     var { userIntro, category, workPlace } = req.body;
   } catch {
+
+    if (req.file) deleteImage(req.file.filename);
     return res.status(400).send({
-      errorMessage: "개인정보를 불러올 수 없습니다."
+      errorMessage: "개인정보를 변경할 수 없습니다."
     });
   }
-
+  
   const old_imgUrl = user.imageUrl;
   const decode_category = JSON.parse(category);
-
+  
   if (userIntro) user.userIntro = userIntro;
   if (workPlace) user.workPlace = workPlace;
-  if (req.file.filename) user.imageUrl = req.file.filename;
+  if (req.file) user.imageUrl = req.file.filename;
   if (decode_category.length) {
     user.category = []; //배열 초기화
     decode_category.forEach((el)=> user.category.push(el));
   }
 
-  try{
+  try {
     user.save();
+    if (req.file) deleteImage(old_imgUrl);
+
+    res.status(200).send({
+      msg: "수정 되었습니다."
+    });
   } catch {
-    deleteImage(req.file.filename);
+    if (req.file) deleteImage(req.file.filename);
+
     return res.status(400).send({
-      errorMessage: "정보 변경에 실패했습니다."
+      errorMessage: "개인정보를 변경할 수 없습니다."
     });
   }
-
-  deleteImage(old_imgUrl);
-
-  res.status(200).send({
-    msg: "수정 되었습니다."
-  });
 });
 
 module.exports = router;

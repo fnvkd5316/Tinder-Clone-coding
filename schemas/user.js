@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const Joi = require("joi");
 
 const UserSchema = new mongoose.Schema({
   userEmail: {
@@ -21,7 +22,7 @@ const UserSchema = new mongoose.Schema({
   },
   imageUrl: {
     type: String,
-    required: true,
+    //required: true,
   },
   refresh_token: {
     type: String,
@@ -41,6 +42,10 @@ const UserSchema = new mongoose.Schema({
   badMe: {
     type: Array,
     default: [],
+  },
+  recommends: {
+    type: Array,
+    default: []
   },
   userIntro: {
     type: String,
@@ -62,4 +67,12 @@ UserSchema.set("toJSON", {
   virtuals: true,
 });
 
-module.exports = mongoose.model("User", UserSchema);
+const SelectSchema = Joi.object({
+  selectId: Joi.string().required(),
+  select: Joi.boolean().required()
+});
+
+module.exports = {
+  User: mongoose.model("User", UserSchema),
+  SelectSchema,
+}
