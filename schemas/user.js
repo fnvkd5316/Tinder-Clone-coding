@@ -40,6 +40,10 @@ const UserSchema = new mongoose.Schema({
     type: Array,
     default: [],
   },
+  recommends: {
+    type: Array,
+    default: []
+  },
   userIntro: {
     type: String,
     default: null
@@ -60,12 +64,6 @@ UserSchema.set("toJSON", {
   virtuals: true,
 });
 
-const modifySchema = Joi.object({
-  userIntro: Joi.string(), 
-  category: Joi.array().items(Joi.string()), 
-  workPlace: Joi.string()
-});
-
 const SelectSchema = Joi.object({
   selectId: Joi.string().required(),
   select: Joi.boolean().required()
@@ -73,6 +71,5 @@ const SelectSchema = Joi.object({
 
 module.exports = {
   User: mongoose.model("User", UserSchema),
-  modifySchema,
   SelectSchema,
 }

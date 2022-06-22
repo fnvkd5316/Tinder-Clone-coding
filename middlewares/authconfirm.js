@@ -23,8 +23,6 @@ module.exports = (req, res, next) => {
     return;
   }
 
-  console.log("토큰에 들어있는 정보: ", jwt.verify(tokenValue, process.env.SECRET_KEY));
-
   try{
     const { userId } = jwt.verify(tokenValue, process.env.SECRET_KEY);
 
@@ -34,7 +32,6 @@ module.exports = (req, res, next) => {
       .exec()
       .then((user) => {
         res.locals.user = user;
-        console.log("유저 이메일:", user.userEmail);
         next();
         if (!user) {
           res.status(400).send({
