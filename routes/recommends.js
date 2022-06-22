@@ -1,29 +1,31 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../schemas/user.js");
-const Chat = require("../schemas/chat.js");
+// const Chat = require("../schemas/chat.js");
 const authMiddlewares = require("../middlewares/authconfirm.js");
+const mongoose = require("mongoose");
+require("dotenv").config();
 
 const recommend_Random = (array, num, ban) => {
+  // 집계 파이프라인에서는 auto casting이 일어나지 않으므로 캐스팅필요
+  array = array.map((element) => {
+    return mongoose.Types.ObjectId(element);
+  });
+
   // $nin : 배열내 요소를 제외하고 검색
   // $in  : 배열내 요소를 검색
   let query = ban ? { $nin: array } : { $in: array };
-
-  const user = User.aggregate([
-    { $match: { userEmail: query } },
-    { $sample: { size: num } }, // 랜덤으로 뽑아올 개수
-    {
-      $project: {
-        // 안가져오는 항목
-        userEmail: false,
-        userPassword: false,
-        like: false,
-        likeMe: false,
-        bad: false,
-        badMe: false,
-        __v: false,
-      },
-    },
+  
+  const user =  User.aggregate([
+    {$match:  { _id: query }}, 
+    {$sample: { size: num  }}, // 랜덤으로 뽑아올 개수 
+    {$project:{ // 안가져오는 항목
+                userEmail: false,
+                userPassword: false, like:  false, 
+                likeMe: false,   bad:   false, 
+                badMe: false,    __v:   false 
+              }
+    }
   ]);
 
   return user;
@@ -41,17 +43,18 @@ router.get("/", authMiddlewares, async (req, res) => {
 
   let users = [];
 
-  if (me.likeMe.length > 1) {
-    // likeMe >  1:  2명을 뽑아서 올린다.
-    users = await recommend_Random(me.likeMe, 2, false);
-  } else if (me.likeMe.length === 1) {
-    // likeME == 1: 1명 올리고, 1명은 랜덤 // like, likeMe, badMe 제외
-    users.push(await User.findbyId(me.likeMe));
+  if (me.likeMe.length > 1) {  // likeMe >  1:  2명을 뽑아서 올린다.  
 
+    users = await recommend_Random(me.likeMe, 2, false);
+
+  } else if ( me.likeMe.length === 1 ) { // likeME == 1: 1명 올리고, 1명은 랜덤 // like, likeMe, badMe 제외
+
+    users.push( await User.findbyId(me.likeMe) );
     ban_array.push(me.likeMe);
-    users.push(await recommend_Random(ban_array, 1, true));
-  } else {
-    // likeMe == 0: 2명 랜덤 // like , likeMe, badMe 제외
+    users.push( await recommend_Random(ban_array, 1, true) );
+
+  } else { // likeMe == 0: 2명 랜덤 // like , likeMe, badMe 제외
+
     users = await recommend_Random(ban_array, 2, true);
   }
 
@@ -59,12 +62,33 @@ router.get("/", authMiddlewares, async (req, res) => {
     return res.status(401).send({
       errorMessage: "검색된 유저가 없습니다.",
     });
-  }
+  }else {
+    return res.status(200).send({ 
+        users: users.map( user => {
+          user.imageUrl = process.env.IMAGE_IP + user.imageUrl;
+          return user;
+        })
+    });
 
-  res.status(200).send({ users });
+    // res.status(200).send({ 
+    //   users: users.map( user => {
+    //     const setUser = {
+    //       userId: user._id,
+    //       userName: user.userName,
+    //       userAge: user.userAge,
+    //       imageUrl: process.env.IMAGE_IP + user.imageUrl,
+    //       userIntro: user.userIntro,
+    //       workPlace: user.workPlace,
+    //       category: user.category
+    //     }
+    //     return setUser;
+    //   })
+    // });        
+  }
 });
 
 router.post("/select", authMiddlewares, async (req, res) => {
+
   try {
     var { selectId, select } = req.body;
   } catch {
@@ -74,9 +98,9 @@ router.post("/select", authMiddlewares, async (req, res) => {
   }
 
   const me = res.locals.user;
-  const other = await User.findById(selectId);
-  const me_info = me.userEmail;
-  const other_info = other.userEmail;
+  const other = await User.findById( selectId ); 
+  const me_info = me.userId;
+  const other_info = other.userId;
 
   if (!me || !other) {
     return res.status(401).send({
@@ -91,8 +115,8 @@ router.post("/select", authMiddlewares, async (req, res) => {
 
     // if (me.likeMe.includes(other_info)){
     // 해당기능 승완님 요청으로 우선 봉인
-    // const chat = await new Chat({ userId_A: me_info, userId_B: other_info }); //chat 서버에 추가한다.
-    // chat.save();
+      // const chat = await new Chat({ userId_A: me_info, userId_B: other_info }); //chat 서버에 추가한다.
+      // chat.save();
     // }
   } else {
     // 싫어요
@@ -100,8 +124,10 @@ router.post("/select", authMiddlewares, async (req, res) => {
     other.badMe.push(me_info);
   }
 
-  if (me.likeMe.length) {
-    var users = await recommend_Random(me.likeMe, 1, false);
+  const likeMe_not_in_like = me.likeMe.filter(userId => me.like.includes(userId) === false );
+
+  if ( likeMe_not_in_like.length ) {
+    var users = await recommend_Random(likeMe_not_in_like, 1, false);
   } else {
     const ban_array = [...me.like, ...me.bad, ...me.badMe]; //검색 안되야할 목록
     ban_array.push(me_info);
@@ -111,11 +137,16 @@ router.post("/select", authMiddlewares, async (req, res) => {
   me.save();
   other.save();
 
-  res.status(200).send({ users });
+  res.status(200).send({ 
+      users: users.map( user => {
+        user.imageUrl = process.env.IMAGE_IP + user.imageUrl;
+        return user;
+      })
+  });
 });
 
 //더미 데이터 넣기 - 테스트용
-const { hash, compare } = require("bcryptjs");
+const { hash, compare, compareSync } = require("bcryptjs");
 
 router.post("/add", async (req, res) => {
   const { name } = req.body;
@@ -137,7 +168,7 @@ router.post("/add", async (req, res) => {
   }
 
   res.status(200).send({
-    msg: "성공",
+    msg: "테스트용 더미넣기 성공"  
   });
 });
 

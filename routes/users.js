@@ -6,6 +6,7 @@ const multer = require("multer");
 const path = require("path");
 const authMiddlewares = require("../middlewares/authconfirm");
 const User = require("../schemas/user");
+const fs = require("fs");
 require("dotenv").config();
 
 const upload = multer({
@@ -16,7 +17,8 @@ const upload = multer({
     },
     filename(req, file, cb) {
       const ext = path.extname(file.originalname);
-      cb(null, path.basename(file.originalname, ext) + Date.now() + ext);
+      // cb(null, path.basename(file.originalname, ext) + Date.now() + ext);
+      cb(null, Date.now() + ext);
     },
     fileFilter: (req, file, cb) => {
       if (["image/png", "image/jpg", "image/jpeg"].includes(file.mimetype)) cd(null, true);
@@ -77,7 +79,14 @@ router.post("/signup", upload.single("imageUrl"), async (req, res) => {
     const imageUrl = req.file.filename;
     const userPassword = await hash(password, 10);
     const user = await User.create({ userEmail, userPassword, userName, userAge, imageUrl });
-    return res.status(201).send({ user });
+
+    user.save();
+
+    // res.status(201).send({ user });
+    res.status(200).send({
+      msg:"회원가입이 완료 되었습니다."
+    })
+
   } catch (error) {
     console.log(error);
     return res.status(400).send({
@@ -87,13 +96,15 @@ router.post("/signup", upload.single("imageUrl"), async (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-  try {
+
+ try {
     const { userEmail, password } = req.body;
     const user = await User.findOne({ userEmail });
     const re_userEmail = /^[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/i;
     const re_password = /^(?=.*[a-zA-z])(?=.*[0-9])(?=.*[$`~!@$!%*#^?&\\(\\)\-_=+]).{8,16}$/;
     const isValid = await compare(password, user.userPassword);
 
+    console.log("id확인");
     if (userEmail.search(re_userEmail) == -1) {
       res.status(400).send({
         errormassage: "Email 형식이 아닙니다",
@@ -108,6 +119,8 @@ router.post("/login", async (req, res) => {
       return;
     }
 
+    const isValid = await compare(password, user.userPassword);
+
     if (!isValid) {
       res.status(400).send({
         errormassage: "아이디나 비밀번호를 다시 확인해 주세요",
@@ -120,6 +133,7 @@ router.post("/login", async (req, res) => {
     // 다시 로그인 시 만료된 refresh_token 재발급
     await User.updateOne({ userEmail }, { $set: { refresh_token } });
     return res.status(201).send({ token, refresh_token });
+
   } catch (error) {
     console.log(error);
     return res.status(400).send({
@@ -156,8 +170,8 @@ router.get("/personal", authMiddlewares, async (req, res) => {
         userEmail: user.userEmail,
         userIntro: user.userIntro,
         category: user.category,
-        imageUrl: user.imageUrl,
-        workPlace: user.workPlace,
+        imageUrl: process.env.IMAGE_IP + user.imageUrl,
+        workPlace: user.workPlace        
       },
     });
   } catch (error) {
@@ -168,15 +182,57 @@ router.get("/personal", authMiddlewares, async (req, res) => {
   }
 });
 
-// 상세 정보 수정
-router.put("/modify", authMiddlewares, async (req, res) => {
-  try {
-    const { user } = res.locals;
-  } catch (error) {
-    console.log(error);
-    res.status(400).send({
-      errormassage: "상세 정보를 가져오지 못하였습니다.",
+
+const deleteImage = (imgName) => {
+  const exist = fs.existsSync("./static/" + imgName);
+
+  console.log("파일 존재: ", exist);  
+
+  if (exist) {
+    fs.unlink("./static/" + imgName, (err) => {
+      if (err) {
+        console.log("파일삭제 실패: ", err);
+      }
     });
   }
+}
+
+// 상세 정보 수정 
+router.put("/modify", authMiddlewares, upload.single("imageUrl"), async (req, res) => {
+  try {
+    var { user } = res.locals;
+    var { userIntro, category, workPlace } = req.body;
+  } catch {
+    return res.status(400).send({
+      errorMessage: "개인정보를 불러올 수 없습니다."
+    });
+  }
+
+  const old_imgUrl = user.imageUrl;
+  const decode_category = JSON.parse(category);
+
+  if (userIntro) user.userIntro = userIntro;
+  if (workPlace) user.workPlace = workPlace;
+  if (req.file.filename) user.imageUrl = req.file.filename;
+  if (decode_category.length) {
+    user.category = []; //배열 초기화
+    decode_category.forEach((el)=> user.category.push(el));
+  }
+
+  try{
+    user.save();
+  } catch {
+    deleteImage(req.file.filename);
+    return res.status(400).send({
+      errorMessage: "정보 변경에 실패했습니다."
+    });
+  }
+
+  deleteImage(old_imgUrl);
+
+  res.status(200).send({
+    msg: "수정 되었습니다."
+  });
 });
+
 module.exports = router;
