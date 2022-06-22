@@ -100,13 +100,11 @@ router.post("/signup", upload.single("imageUrl"), async (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-
  try {
     const { userEmail, password } = req.body;
     const user = await User.findOne({ userEmail });
     const re_userEmail = /^[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/i;
     const re_password = /^(?=.*[a-zA-z])(?=.*[0-9])(?=.*[$`~!@$!%*#^?&\\(\\)\-_=+]).{8,16}$/;
-    const isValid = await compare(password, user.userPassword);
 
     if (userEmail.search(re_userEmail) == -1) {
       res.status(400).send({
@@ -121,7 +119,8 @@ router.post("/login", async (req, res) => {
       });
       return;
     }
-
+    
+    const isValid = await compare(password, user.userPassword);
     if (!isValid) {
       res.status(400).send({
         errormassage: "아이디나 비밀번호를 다시 확인해 주세요",
@@ -129,8 +128,11 @@ router.post("/login", async (req, res) => {
       return;
     }
 
-    const token = jwt.sign({ userName: user.userName, imageUrl: user.imageUrl }, process.env.SECRET_KEY, { expiresIn: "1h" });
+    console.log("로그인된 유저 이름:", user.userName);
+
+    const token = jwt.sign({ userId: user.userId }, process.env.SECRET_KEY, { expiresIn: "1h" });
     const refresh_token = jwt.sign({}, process.env.SECRET_KEY, { expiresIn: "6h" });
+
     // 다시 로그인 시 만료된 refresh_token 재발급
     await User.updateOne({ userEmail }, { $set: { refresh_token } });
     return res.status(201).send({ token, refresh_token });
@@ -146,6 +148,7 @@ router.post("/login", async (req, res) => {
 router.get("/auth", authMiddlewares, async (req, res) => {
   try {
     const { user } = res.locals;
+
     res.status(200).send({
       user: {
         userEmail: user.userEmail,
@@ -165,6 +168,9 @@ router.get("/auth", authMiddlewares, async (req, res) => {
 router.get("/personal", authMiddlewares, async (req, res) => {
   try {
     const { user } = res.locals;
+
+    console.log("상세정보: ", user);
+
     res.status(200).send({
       user: {
         userName: user.userName,
