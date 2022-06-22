@@ -8,7 +8,7 @@ const UserSchema = new mongoose.Schema({
   },
   userPassword: {
     type: String,
-    // required: true,
+    required: true,
   },
   userName: {
     type: String,
@@ -17,10 +17,11 @@ const UserSchema = new mongoose.Schema({
   userAge: {
     type: Number,
     required: true,
+    unique: true,
   },
   imageUrl: {
     type: String,
-    // required: true,
+    required: true,
   },
   refresh_token: {
     type: String,
