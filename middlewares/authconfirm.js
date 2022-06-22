@@ -32,7 +32,7 @@ module.exports = (req, res, next) => {
             res.status(400).send({ errorMessage: "로그인이 필요합니다." });
           } else {
             // refreshToken이 만료되지 않으면 토큰 재발급
-            const newToken = jwt.sign({ userEmail: userEmail, userName: user.userName, imageUrl: user.imageUrl }, process.env.SECRET_KEY, { expiresIn: "30m" });
+            const newToken = jwt.sign({ userName: user.userName, imageUrl: user.imageUrl }, process.env.SECRET_KEY, { expiresIn: "30m" });
             console.log(newToken);
             res.status(201).send({ newToken });
           }
