@@ -24,35 +24,34 @@ module.exports = (req, res, next) => {
   }
 
   try {
-    // 만료된 토큰 재갱신 및 확인
+   // 만료된 토큰 재갱신 및 확인
     const token = jwt.verify(tokenValue, process.env.SECRET_KEY);
     console.log(token);
     if (token == "jwt expired") {
       // token 만료시 복호화하여 userInfo에 값을 할당 후
-      const userInfo = jwt.decode(tokenValue, process.env.SECRET_KEY);
-      console.log(userInfo);
-      const userName = userInfo.userName;
+      const { userId } = jwt.decode(tokenValue, process.env.SECRET_KEY);
       let refresh_token;
-      User.findOne({ userName })
+      User.findById(userId)
         .exec()
         .then((user) => {
           refresh_token = user.refresh_token;
           const Refresh_token = jwt.verify(refresh_token, process.env.SECRET_KEY);
           if (Refresh_token == "jwt expired") {
             // refreshToken도 만료 되면 에러 메세지
-            res.status(400).send({ errorMessage: "로그인이 필요합니다." });
+            return res.status(400).send({ errorMessage: "로그인이 필요합니다." });
           } else {
             // refreshToken이 만료되지 않으면 토큰 재발급
             const newToken = jwt.sign({ userName: user.userName, imageUrl: user.imageUrl }, process.env.SECRET_KEY, { expiresIn: "30m" });
             console.log(newToken);
-            res.status(201).send({ newToken });
+            return res.status(201).send({ newToken });
           }
         });
     } else {
       const { userId } = jwt.verify(tokenValue, process.env.SECRET_KEY);
-      User.findOne({ userId })
+      User.findById( userId )
         .exec()
         .then((user) => {
+          console.log("로그인된 유저", user);
           res.locals.user = user;
           next();
           if (!user) {

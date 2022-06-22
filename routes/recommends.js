@@ -120,6 +120,12 @@ router.post("/select", authMiddlewares, async (req, res) => {
     });
   }
 
+  if (me.like.includes(other.userEmail)) {
+    return res.status(402).send({
+      errorMessage: "이미 좋아요를 누른 유저입니다.",
+    });
+  }
+
   me.recommends = me.recommends.filter(userEmail => userEmail !== other.userEmail);
 
   const me_info = me.userEmail;
