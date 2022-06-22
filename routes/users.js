@@ -73,6 +73,7 @@ router.post("/signup", upload.single("imageUrl"), async (req, res) => {
       });
       return;
     }
+
     const imageUrl = req.file.filename;
     const userPassword = await hash(password, 10);
     const user = await User.create({ userEmail, userPassword, userName, userAge, imageUrl });
