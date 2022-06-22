@@ -5,11 +5,11 @@ const UserSchema = new mongoose.Schema({
   userEmail: {
     type: String,
     required: true,
-    unique: true,    
+    unique: true,
   },
   userPassword: {
     type: String,
-    // required: true,
+    required: true,
   },
   userName: {
     type: String,
@@ -18,11 +18,14 @@ const UserSchema = new mongoose.Schema({
   userAge: {
     type: Number,
     required: true,
+    unique: true,
   },
   imageUrl: {
     type: String,
-    default: null,
-    // required: true,
+    //required: true,
+  },
+  refresh_token: {
+    type: String,
   },
   like: {
     type: Array,
@@ -46,16 +49,16 @@ const UserSchema = new mongoose.Schema({
   },
   userIntro: {
     type: String,
-    default: null
+    default: null,
   },
   workPlace: {
     type: String,
-    default: null
+    default: null,
   },
   category: {
     type: Array,
-    default: []
-  }
+    default: [],
+  },
 });
 UserSchema.virtual("userId").get(function () {
   return this._id.toHexString();

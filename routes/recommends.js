@@ -37,14 +37,13 @@ const recommend_Random = (array, num, ban) => {
   return user;
 };
 
-
 router.get("/", authMiddlewares, async (req, res) => {
-  try{
+  try {
     var me = res.locals.user;
     var ban_array = [...me.like, ...me.bad, ...me.badMe, me.userEmail]; //검색 안되야할 목록
   } catch {
     return res.status(400).send({
-      errorMessage: "로그인 해주세요."
+      errorMessage: "로그인 해주세요.",
     });
   }
 
@@ -72,7 +71,7 @@ router.get("/", authMiddlewares, async (req, res) => {
 
   if (users.length === 0) {
     return res.status(401).send({
-      errorMessage: "검색된 유저가 없습니다."
+      errorMessage: "검색된 유저가 없습니다.",
     });
   }
 
@@ -103,22 +102,21 @@ router.get("/", authMiddlewares, async (req, res) => {
 
 });
 
-
 router.post("/select", authMiddlewares, async (req, res) => {
   try {
     var { selectId, select } = await SelectSchema.validateAsync(req.body);
   } catch {
     return res.status(400).send({
-      errorMessage: "받아올 정보를 찾을 수 없습니다."
+      errorMessage: "받아올 정보를 찾을 수 없습니다.",
     });
   }
 
   const me = res.locals.user;
   const other = await User.findById( selectId );
 
-  if ( !me || !other ) {
-    return  res.status(401).send({
-      errorMessage: "받아올 정보를 찾을 수 없습니다."
+  if (!me || !other) {
+    return res.status(401).send({
+      errorMessage: "받아올 정보를 찾을 수 없습니다.",
     });
   }
 
@@ -191,13 +189,11 @@ router.post("/select", authMiddlewares, async (req, res) => {
 
 });
 
-
 //더미 데이터 넣기 - 테스트용
 const { hash, compare, compareSync } = require("bcryptjs");
 
 router.post("/add", async (req, res) => {
-
-  const {name} = req.body;
+  const { name } = req.body;
   const userPassword = await hash("1234_qwer", 10);
 
   for ( let i = 1; i < 31; i++ ) {
@@ -221,7 +217,6 @@ router.post("/add", async (req, res) => {
   });
 });
 
-
 router.get("/delete_select", async (req, res) => {
   await User.updateMany({}, { $set:{ like:[], likeMe:[], bad:[], badMe:[] }});
   
@@ -231,3 +226,4 @@ router.get("/delete_select", async (req, res) => {
 });
 
 module.exports = router;
+
