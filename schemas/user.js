@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const Joi = require("joi");
 
 const UserSchema = new mongoose.Schema({
   userEmail: {
@@ -20,6 +21,7 @@ const UserSchema = new mongoose.Schema({
   },
   imageUrl: {
     type: String,
+    default: null,
     // required: true,
   },
   like: {
@@ -58,4 +60,19 @@ UserSchema.set("toJSON", {
   virtuals: true,
 });
 
-module.exports = mongoose.model("User", UserSchema);
+const modifySchema = Joi.object({
+  userIntro: Joi.string(), 
+  category: Joi.array().items(Joi.string()), 
+  workPlace: Joi.string()
+});
+
+const SelectSchema = Joi.object({
+  selectId: Joi.string().required(),
+  select: Joi.boolean().required()
+});
+
+module.exports = {
+  User: mongoose.model("User", UserSchema),
+  modifySchema,
+  SelectSchema,
+}
