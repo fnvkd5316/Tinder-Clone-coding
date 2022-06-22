@@ -23,27 +23,46 @@ module.exports = (req, res, next) => {
     return;
   }
 
-  console.log("토큰에 들어있는 정보: ", jwt.verify(tokenValue, process.env.SECRET_KEY));
-
-  try{
-    const { userId } = jwt.verify(tokenValue, process.env.SECRET_KEY);
-
-    console.log( userId );
-
-     User.findById(userId)
-      .exec()
-      .then((user) => {
-        res.locals.user = user;
-        console.log("유저 이메일:", user.userEmail);
-        next();
-        if (!user) {
-          res.status(400).send({
-            errorMessage: "회원가입이 필요합니다",
-          });
-        }
-      });
-  } catch {
-    return res.status(401).send({
+  try {
+    // 만료된 토큰 재갱신 및 확인
+    const token = jwt.verify(tokenValue, process.env.SECRET_KEY);
+    console.log(token);
+    if (token == "jwt expired") {
+      // token 만료시 복호화하여 userInfo에 값을 할당 후
+      const userInfo = jwt.decode(tokenValue, process.env.SECRET_KEY);
+      console.log(userInfo);
+      const userName = userInfo.userName;
+      let refresh_token;
+      User.findOne({ userName })
+        .exec()
+        .then((user) => {
+          refresh_token = user.refresh_token;
+          const Refresh_token = jwt.verify(refresh_token, process.env.SECRET_KEY);
+          if (Refresh_token == "jwt expired") {
+            // refreshToken도 만료 되면 에러 메세지
+            res.status(400).send({ errorMessage: "로그인이 필요합니다." });
+          } else {
+            // refreshToken이 만료되지 않으면 토큰 재발급
+            const newToken = jwt.sign({ userName: user.userName, imageUrl: user.imageUrl }, process.env.SECRET_KEY, { expiresIn: "30m" });
+            console.log(newToken);
+            res.status(201).send({ newToken });
+          }
+        });
+    } else {
+      const { userId } = jwt.verify(tokenValue, process.env.SECRET_KEY);
+      User.findOne({ userId })
+        .exec()
+        .then((user) => {
+          res.locals.user = user;
+          next();
+          if (!user) {
+            res.status(400).send({ errorMessage: "회원가입이 필요합니다" });
+          }
+        });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(401).send({
       errorMessage: "로그인 후 이용 가능합니다.",
     });  
   }

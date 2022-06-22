@@ -30,16 +30,33 @@ const upload = multer({
   }),
 });
 
+router.get("/idcheck", async (req, res) => {
+  const { userEmail } = req.body;
+  const existEmail = await User.findOne({ userEmail });
+
+  if (existEmail) {
+    res.status(400).send({
+      errormassage: "이미 가입된 Email 입니다.",
+    });
+    return;
+  } else {
+    res.status(200).send({
+      errormassage: "사용 가능한 Email 입니다.",
+    });
+    return;
+  }
+});
+
 router.post("/signup", upload.single("imageUrl"), async (req, res) => {
   try {
     const { userEmail, password, userName, userAge } = req.body;
-
+    // 이메일 형식
     const re_userEmail = /^[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/i;
+    // 8 ~ 16자 영문, 숫자, 특수문자를 최소 한가지씩 입력해야 합니다
     const re_password = /^(?=.*[a-zA-z])(?=.*[0-9])(?=.*[$`~!@$!%*#^?&\\(\\)\-_=+]).{8,16}$/;
-
     if (userEmail.search(re_userEmail) == -1) {
       res.status(400).send({
-        errormassage: "이메일 형식이 아닙니다",
+        errormassage: "Email 형식이 아닙니다",
       });
       return;
     }
@@ -51,47 +68,50 @@ router.post("/signup", upload.single("imageUrl"), async (req, res) => {
       return;
     }
 
-    const existuser = await User.find({ userEmail });
+    const existuser = await User.find({ $or: [{ userEmail }, { userName }] });
     if (existuser.length) {
       res.status(400).send({
-        errormassage: "해당 이메일은 이미 가입된 이메일입니다.",
+        errormassage: "이미 가입된 Email 또는 이름이 있습니다",
       });
       return;
     }
-  
-    const userPassword = await hash(password, 10);
+
     const imageUrl = req.file.filename;
+    const userPassword = await hash(password, 10);
     const user = await User.create({ userEmail, userPassword, userName, userAge, imageUrl });
+
     user.save();
 
     // res.status(201).send({ user });
     res.status(200).send({
       msg:"회원가입이 완료 되었습니다."
     })
+
   } catch (error) {
-    res.status(400).send({
+    console.log(error);
+    return res.status(400).send({
       errormassage: "요청한 데이터 형식이 올바르지 않습니다.",
     });
   }
 });
 
 router.post("/login", async (req, res) => {
+
  try {
-    console.log( req.body );
     const { userEmail, password } = req.body;
     const user = await User.findOne({ userEmail });
     const re_userEmail = /^[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/i;
     const re_password = /^(?=.*[a-zA-z])(?=.*[0-9])(?=.*[$`~!@$!%*#^?&\\(\\)\-_=+]).{8,16}$/;
+    const isValid = await compare(password, user.userPassword);
 
     console.log("id확인");
     if (userEmail.search(re_userEmail) == -1) {
       res.status(400).send({
-        errormassage: "이메일 형식이 아닙니다.",
+        errormassage: "Email 형식이 아닙니다",
       });
       return;
     }
 
-    console.log("pw확인");
     if (password.search(re_password) == -1) {
       res.status(400).send({
         errormassage: "8 ~ 16자 영문, 숫자, 특수문자를 최소 한가지씩 입력해야 합니다",
@@ -99,8 +119,8 @@ router.post("/login", async (req, res) => {
       return;
     }
 
-    console.log("id, pw일치확인");
     const isValid = await compare(password, user.userPassword);
+
     if (!isValid) {
       res.status(400).send({
         errormassage: "아이디나 비밀번호를 다시 확인해 주세요",
@@ -108,13 +128,15 @@ router.post("/login", async (req, res) => {
       return;
     }
 
-    const token = jwt.sign({ userId: user.userId, imageUrl: process.env.IMAGE_IP + user.imageUrl }, 
-                          process.env.SECRET_KEY, { expiresIn: "6h" });
+    const token = jwt.sign({ userName: user.userName, imageUrl: user.imageUrl }, process.env.SECRET_KEY, { expiresIn: "1h" });
+    const refresh_token = jwt.sign({}, process.env.SECRET_KEY, { expiresIn: "6h" });
+    // 다시 로그인 시 만료된 refresh_token 재발급
+    await User.updateOne({ userEmail }, { $set: { refresh_token } });
+    return res.status(201).send({ token, refresh_token });
 
-    res.status(201).send({ token });
   } catch (error) {
     console.log(error);
-    res.status(400).send({
+    return res.status(400).send({
       errormassage: "아이디 또는 비밀번호를 확인해주세요",
     });
   }
@@ -124,22 +146,26 @@ router.get("/auth", authMiddlewares, async (req, res) => {
   try {
     const { user } = res.locals;
     res.status(200).send({
-      user: { userId: user.userId },
+      user: {
+        userEmail: user.userEmail,
+        userName: user.userName,
+        imageUrl: user.imageUrl,
+      },
     });
   } catch (error) {
     console.log(error);
     res.status(400).send({
-      errormassage: "사용자 정보를 가져오지 못하였습니다.",
+      errormassage: "사용자 정보를 가져오지 못하였습니다",
     });
   }
 });
 
-// 나의 상세정보 조회 
+// 나의 상세정보 조회
 router.get("/personal", authMiddlewares, async (req, res) => {
   try {
     const { user } = res.locals;
     res.status(200).send({
-      user: { 
+      user: {
         userName: user.userName,
         userEmail: user.userEmail,
         userIntro: user.userIntro,
@@ -155,6 +181,7 @@ router.get("/personal", authMiddlewares, async (req, res) => {
     });
   }
 });
+
 
 const deleteImage = (imgName) => {
   const exist = fs.existsSync("./static/" + imgName);

@@ -7,7 +7,6 @@ const mongoose = require("mongoose");
 require("dotenv").config();
 
 const recommend_Random = (array, num, ban) => {
-  
   // 집계 파이프라인에서는 auto casting이 일어나지 않으므로 캐스팅필요
   array = array.map((element) => {
     return mongoose.Types.ObjectId(element);
@@ -32,14 +31,13 @@ const recommend_Random = (array, num, ban) => {
   return user;
 };
 
-
 router.get("/", authMiddlewares, async (req, res) => {
-  try{
+  try {
     var me = res.locals.user;
     var ban_array = [...me.like, ...me.bad, ...me.badMe, me.userId]; //검색 안되야할 목록
   } catch {
     return res.status(400).send({
-      errorMessage: "로그인 해주세요."
+      errorMessage: "로그인 해주세요.",
     });
   }
 
@@ -62,7 +60,7 @@ router.get("/", authMiddlewares, async (req, res) => {
 
   if (users.length === 0) {
     return res.status(401).send({
-      errorMessage: "검색된 유저가 없습니다."
+      errorMessage: "검색된 유저가 없습니다.",
     });
   }else {
     return res.status(200).send({ 
@@ -89,14 +87,13 @@ router.get("/", authMiddlewares, async (req, res) => {
   }
 });
 
-
 router.post("/select", authMiddlewares, async (req, res) => {
 
   try {
     var { selectId, select } = req.body;
   } catch {
     return res.status(400).send({
-      errorMessage: "받아올 정보를 찾을 수 없습니다."
+      errorMessage: "받아올 정보를 찾을 수 없습니다.",
     });
   }
 
@@ -105,13 +102,14 @@ router.post("/select", authMiddlewares, async (req, res) => {
   const me_info = me.userId;
   const other_info = other.userId;
 
-  if ( !me || !other ) {
-    return  res.status(401).send({
-      errorMessage: "받아올 정보를 찾을 수 없습니다."
+  if (!me || !other) {
+    return res.status(401).send({
+      errorMessage: "받아올 정보를 찾을 수 없습니다.",
     });
   }
 
-  if (select === true) { // 좋아요
+  if (select === true) {
+    // 좋아요
     me.like.push(other_info);
     other.likeMe.push(me_info);
 
@@ -120,7 +118,8 @@ router.post("/select", authMiddlewares, async (req, res) => {
       // const chat = await new Chat({ userId_A: me_info, userId_B: other_info }); //chat 서버에 추가한다.
       // chat.save();
     // }
-  } else { // 싫어요
+  } else {
+    // 싫어요
     me.bad.push(other_info);
     other.badMe.push(me_info);
   }
@@ -146,28 +145,25 @@ router.post("/select", authMiddlewares, async (req, res) => {
   });
 });
 
-
 //더미 데이터 넣기 - 테스트용
 const { hash, compare, compareSync } = require("bcryptjs");
 
 router.post("/add", async (req, res) => {
-
-  const {name} = req.body;
+  const { name } = req.body;
   const userPassword = await hash("1234_qwer", 10);
 
-  for ( let i = 1; i < 31; i++ ) {
-  
-    const user = new User({ 
-        userEmail: `${name}_${i}@email.com`, 
-        userPassword: userPassword,
-        userName: `${name}_${i}`,
-        userAge: i,
-        imageUrl: "https://i.ytimg.com/vi/ZV_zXb_P22g/maxresdefault.jpg",
-        like:[],
-        likeMe:[],
-        bad:[],
-        badMe:[]
-      });
+  for (let i = 1; i < 31; i++) {
+    const user = new User({
+      userEmail: `${name}_${i}@email.com`,
+      userPassword: userPassword,
+      userName: `${name}_${i}`,
+      userAge: i,
+      imageUrl: "https://i.ytimg.com/vi/ZV_zXb_P22g/maxresdefault.jpg",
+      like: [],
+      likeMe: [],
+      bad: [],
+      badMe: [],
+    });
     user.save();
   }
 

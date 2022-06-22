@@ -8,7 +8,7 @@ const ChatSchema = new mongoose.Schema({
   userId_B: {
     type: String,
     required: true,
-  }
+  },
 });
 
 ChatSchema.virtual("chatId").get(function () {
