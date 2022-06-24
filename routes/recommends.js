@@ -1,17 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const {User, SelectSchema} = require("../schemas/user.js");
-// const Chat = require("../schemas/chat.js");
 const authMiddlewares = require("../middlewares/authconfirm.js");
 const mongoose = require("mongoose");
 require("dotenv").config();
 
 const recommend_Random = (array, num, ban) => {
-
-  // 집계 파이프라인에서는 auto casting이 일어나지 않으므로 캐스팅필요
-  // array = array.map((element) => {
-  //   return mongoose.Types.ObjectId(element);
-  // });
 
   // $nin : 배열내 요소를 제외하고 검색
   // $in  : 배열내 요소를 검색
@@ -50,18 +44,17 @@ router.get("/", authMiddlewares, async (req, res) => {
   let likeMeUser = [];
   let randomUser = [];
 
-  const likeMe_not_in_like = me.likeMe.filter(userId => me.like.includes(userId) === false );
+  let likeMe_filter = me.likeMe.filter( userEmail => me.like.includes(userEmail) === false );
+  likeMe_filter = likeMe_filter.filter( userEmail => me.bad.includes(userEmail) === false );
 
-  console.log(me.userName,"검색될 우선순위:", likeMe_not_in_like);
+  if (likeMe_filter.length > 1) {
 
-  if (likeMe_not_in_like.length > 1) {
-
-    likeMeUser = await recommend_Random(likeMe_not_in_like, 2, false); 
-  } else if ( likeMe_not_in_like.length === 1 ) {
+    likeMeUser = await recommend_Random(likeMe_filter, 2, false); 
+  } else if ( likeMe_filter.length === 1 ) {
 
     ban_array.push(me.likeMe[0]);//위에서 1명 뽑아왔으므로!
     randomUser = await recommend_Random(ban_array, 1, true);  //검색조건 다르다.
-    likeMeUser = await recommend_Random(likeMe_not_in_like, 1, false);
+    likeMeUser = await recommend_Random(likeMe_filter, 1, false);
   } else {
 
     randomUser = await recommend_Random(ban_array, 2, true);
@@ -70,8 +63,22 @@ router.get("/", authMiddlewares, async (req, res) => {
   const users = [...likeMeUser, ...randomUser]; 
 
   if (users.length === 0) {
-    return res.status(401).send({
-      errorMessage: "검색된 유저가 없습니다.",
+
+    const setUser = {
+      _id: "404",
+      userAge: "404",
+      userName: "없어요",
+      imageUrl: process.env.IMAGE_IP + "userEmpty.png",
+      userIntro: "추천할 유저가 없습니다",
+      category: [],
+      workPlace: "공허하네요"        
+    }
+
+    const set = [];
+    set.push(setUser); //배열로 넣어서 보낸다.
+
+    return res.status(200).send({
+      users: set,
     });
   }
 
@@ -82,8 +89,6 @@ router.get("/", authMiddlewares, async (req, res) => {
   });
 
   me.save();
-
-  console.log(me.userName ,"이 요청한 추천 2개:", users);
 
   res.status(200).send({ 
       users: users.map( user => {
@@ -120,9 +125,15 @@ router.post("/select", authMiddlewares, async (req, res) => {
     });
   }
 
-  if (me.like.includes(other.userEmail)) {
+  if (me.like.includes(other.userEmail) && select === true) {
     return res.status(402).send({
       errorMessage: "이미 좋아요를 누른 유저입니다.",
+    });
+  }
+
+  if (me.bad.includes(other.userEmail) && select === false) {
+    return res.status(402).send({
+      errorMessage: "이미 싫어요를 누른 유저입니다.",
     });
   }
 
@@ -139,27 +150,15 @@ router.post("/select", authMiddlewares, async (req, res) => {
     other.badMe.push(me_info);
   }
 
-  // if (me.likeMe.includes(other_info) && select === true) {
-  // 해당기능 승완님 요청으로 우선 봉인
-    // const chat = await new Chat({ userId_A: me_info, userId_B: other_info }); //chat 서버에 추가한다.
-    // chat.save();
-  // }
+  let likeMe_filter = me.likeMe.filter(userEmail => me.like.includes(userEmail) === false );
+  likeMe_filter = likeMe_filter.filter(userEmail => me.bad.includes(userEmail) === false );
 
-  const likeMe_not_in_like = me.likeMe.filter(userId => me.like.includes(userId) === false );
-
-  console.log("나를 좋아하는 유저: ", me.likeMe);
-  console.log("내가 좋아요한 유저뺌: ", likeMe_not_in_like);
-
-  if ( likeMe_not_in_like.length ) {
-    var users = await recommend_Random(likeMe_not_in_like, 1, false);
+  if ( likeMe_filter.length ) {
+    var users = await recommend_Random(likeMe_filter, 1, false);
   } else {
     let ban_array = [...me.like, ...me.bad, ...me.badMe, ...me.recommends]; //검색 안되야할 목록
-    console.log("띄우지 말아야할 목록: ", ban_array);
 
     ban_array.push(me_info);
-
-    console.log("내가 추가된 목록: ", ban_array);
-
     var users = await recommend_Random(ban_array, 1, true);
   }
 
@@ -169,12 +168,23 @@ router.post("/select", authMiddlewares, async (req, res) => {
 
   me.save();
   other.save();
- 
-  console.log("1명 추천 검색된 유저:", users);
 
   if (users.length === 0) {
-    return res.status(401).send({
-      errorMessage: "검색된 유저가 없습니다."
+    const setUser = {
+      _id: "404",
+      userAge: "404",
+      userName: "없어요",
+      imageUrl: process.env.IMAGE_IP + "userEmpty.png",
+      userIntro: "추천할 유저가 없습니다",
+      category: [],
+      workPlace: "공허하네요"        
+    }
+
+    const set = [];
+    set.push(setUser); //배열로 넣어서 보낸다.
+
+    return res.status(200).send({
+      users: set,
     });
   } else {
     res.status(200).send({ 
@@ -193,42 +203,6 @@ router.post("/select", authMiddlewares, async (req, res) => {
     });
   }
 
-});
-
-//더미 데이터 넣기 - 테스트용
-const { hash, compare, compareSync } = require("bcryptjs");
-
-router.post("/add", async (req, res) => {
-  const { name } = req.body;
-  const userPassword = await hash("1234_qwer", 10);
-
-  for ( let i = 1; i < 31; i++ ) {
-  
-    const user = new User({ 
-        userEmail: `${name}_${i}@email.com`, 
-        userPassword: userPassword,
-        userName: `${name}_${i}`,
-        userAge: i,
-        imageUrl: "gongU.jpg",
-        like:[],
-        likeMe:[],
-        bad:[],
-        badMe:[]
-      });
-    user.save();
-  }
-
-  res.status(200).send({
-    msg: "테스트용 더미넣기 성공"  
-  });
-});
-
-router.get("/delete_select", async (req, res) => {
-  await User.updateMany({}, { $set:{ like:[], likeMe:[], bad:[], badMe:[] }});
-  
-  res.status(200).send({
-    msg:"성공"
-  })
 });
 
 module.exports = router;

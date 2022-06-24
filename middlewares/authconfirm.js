@@ -12,9 +12,6 @@ module.exports = (req, res, next) => {
       errorMessage: "로그인 후 이용 가능합니다.",
     });
   }
-  console.log("인증키: ", authorization );
-  console.log("타입: ", tokenType );
-  console.log("토큰 값: ", tokenValue );
 
   if (!tokenValue || tokenType !== "Bearer") {
     res.status(401).send({
@@ -51,7 +48,6 @@ module.exports = (req, res, next) => {
       User.findById( userId )
         .exec()
         .then((user) => {
-          console.log("로그인된 유저", user);
           res.locals.user = user;
           next();
           if (!user) {
@@ -60,8 +56,7 @@ module.exports = (req, res, next) => {
         });
     }
   } catch (err) {
-    console.log(err);
-    res.status(401).send({
+    return res.status(401).send({
       errorMessage: "로그인 후 이용 가능합니다.",
     });  
   }

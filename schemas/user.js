@@ -18,7 +18,6 @@ const UserSchema = new mongoose.Schema({
   userAge: {
     type: Number,
     required: true,
-    unique: true,
   },
   imageUrl: {
     type: String,

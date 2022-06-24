@@ -18,10 +18,7 @@ const upload = multer({
     filename(req, file, cb) {
       if ( file ) { 
         const ext = path.extname(file.originalname);
-        // cb(null, path.basename(file.originalname, ext) + Date.now() + ext);
         cb(null, Date.now() + ext);
-      }else{
-        console.log("파일 존재 안함");
       }
     },
     fileFilter: (req, file, cb) => {
@@ -92,7 +89,6 @@ router.post("/signup", upload.single("imageUrl"), async (req, res) => {
     })
 
   } catch (error) {
-    console.log(error);
     return res.status(400).send({
       errormassage: "요청한 데이터 형식이 올바르지 않습니다.",
     });
@@ -128,8 +124,6 @@ router.post("/login", async (req, res) => {
       return;
     }
 
-    console.log("로그인된 유저 이름:", user.userName);
-
     const token = jwt.sign({ userId: user.userId }, process.env.SECRET_KEY, { expiresIn: "1h" });
     const refresh_token = jwt.sign({}, process.env.SECRET_KEY, { expiresIn: "6h" });
 
@@ -138,7 +132,6 @@ router.post("/login", async (req, res) => {
     return res.status(201).send({ token, refresh_token });
 
   } catch (error) {
-    console.log(error);
     return res.status(400).send({
       errormassage: "아이디 또는 비밀번호를 확인해주세요",
     });
@@ -157,7 +150,6 @@ router.get("/auth", authMiddlewares, async (req, res) => {
       },
     });
   } catch (error) {
-    console.log(error);
     res.status(400).send({
       errormassage: "사용자 정보를 가져오지 못하였습니다",
     });
@@ -168,8 +160,6 @@ router.get("/auth", authMiddlewares, async (req, res) => {
 router.get("/personal", authMiddlewares, async (req, res) => {
   try {
     const { user } = res.locals;
-
-    console.log("상세정보: ", user);
 
     res.status(200).send({
       user: {
@@ -182,7 +172,6 @@ router.get("/personal", authMiddlewares, async (req, res) => {
       },
     });
   } catch (error) {
-    console.log(error);
     res.status(400).send({
       errormassage: "상세 정보를 가져오지 못하였습니다.",
     });
@@ -192,12 +181,8 @@ router.get("/personal", authMiddlewares, async (req, res) => {
 
 const deleteImage = (imgName) => {
   const exist = fs.existsSync("./static/" + imgName);
-  console.log("파일삭제 존재하나요? : ", exist);  
   if (exist) {
     fs.unlink("./static/" + imgName, (err) => {
-      if (err) {
-        console.log("파일삭제 실패: ", err);
-      }
     });
   }
 }
