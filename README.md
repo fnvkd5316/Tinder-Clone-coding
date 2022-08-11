@@ -21,6 +21,7 @@
 ![](https://img.shields.io/badge/javascript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
 ![](https://img.shields.io/badge/amazonaws-232F3E?style=for-the-badge&logo=amazonaws&logoColor=white)\
 <img src="https://img.shields.io/badge/mongoDB-47A248?style=for-the-badge&logo=MongoDB&logoColor=white">
+![](https://img.shields.io/badge/socket.io-010101?style=for-the-badge&logo=socket.io&logoColor=white)
 
 <br>
 
@@ -32,7 +33,6 @@
 <img src='https://img.shields.io/badge/dotenv-16.0.1-lightgrey'>  | 환경변수 관리
 <img src='https://img.shields.io/badge/joi-17.6.0-lightgrey'>  | 입력데이터 검출
 <img src='https://img.shields.io/badge/multer--s3-2.10.0-lightgrey'>  | 서버내 이미지 저장
-![](https://img.shields.io/badge/socket.io-010101?style=for-the-badge&logo=socket.io&logoColor=white)
 
 <br>
 
