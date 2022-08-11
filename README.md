@@ -79,4 +79,4 @@
 |:---:|:---:|:---:|
 | 김형근 | https://github.com/fnvkd5316 | 메인페이지( 추천 알고리즘 ), 개인정보 페이지 |
 | 윤형진 | https://github.com/engin9803 | 회원가입, 로그인 페이지 |
-| 유승완 | https://github.com/avo1032 | 실시간 채팅 구현 |
+| 유승완 | https://github.com/avo1032 | 실시간 채팅 구현(Socket.io) |
